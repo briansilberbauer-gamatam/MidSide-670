@@ -116,6 +116,8 @@ The Standalone build can be launched directly from `dist/MidSide-670`.
 
 `.github/workflows/build.yml` builds and tests Windows x64, Linux x64 and macOS Universal (`arm64` + `x86_64`) binaries, packages VST3 + Standalone distributions with SHA-256 checksums, and publishes them to GitHub Releases for `v*` tags or a manual `workflow_dispatch` release tag.
 
+The current release is **v2.0.0**, the studio-hardware redesign with a live waveform screen. See [CHANGELOG.md](CHANGELOG.md) for the full history; v2 leaves the audio engine, parameters, and factory presets unchanged from v1.0.0.
+
 ## Notes
 
 MidSide-670 is an original design inspired by the behaviour of classic variable-mu compressors. It is not affiliated with, endorsed by, or a model of any particular vintage hardware manufacturer. Fairchild is a trademark of its respective owner. The bundled Lato typefaces are licensed under the SIL Open Font License; see `Resources/Lato-OFL.txt`.

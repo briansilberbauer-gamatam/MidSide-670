@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Optional release tag (e.g. v1.0.0). Leave empty for CI artifacts only."
+        description: "Optional release tag (e.g. v2.0.0). Leave empty for CI artifacts only."
         required: false
         type: string
   push:
@@ -259,6 +259,9 @@ jobs:
       contents: write
 
     steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
       - name: Download release packages
         uses: actions/download-artifact@v4
         with:
@@ -266,12 +269,24 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Assemble release notes
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.release_tag || github.ref_name }}"
+          NOTES="docs/releases/${TAG}.md"
+          if [ -f "$NOTES" ]; then
+            cp "$NOTES" release-notes.md
+          else
+            printf 'MidSide-670 %s\n' "$TAG" > release-notes.md
+          fi
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag || github.ref_name }}
           target_commitish: ${{ github.sha }}
           name: MidSide-670 ${{ inputs.release_tag || github.ref_name }}
+          body_path: release-notes.md
           files: |
             release-assets/*.zip
             release-assets/*.sha256

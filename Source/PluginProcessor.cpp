@@ -139,7 +139,7 @@ void MidSide670AudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     gainReductionSide.store (0.0f, std::memory_order_relaxed);
 
     // Keep roughly 750 waveform columns per second at any sample rate, which
-    // gives the display a ~0.7 second window at its 512-column view.
+    // gives the display a ~0.34 second window at its 256-column view.
     waveformSamplesPerColumn = juce::jmax (8, juce::roundToInt (currentSampleRate / 750.0));
     resetWaveformHistory();
 }

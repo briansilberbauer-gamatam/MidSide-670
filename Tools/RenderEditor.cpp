@@ -12,7 +12,7 @@ class MidSide670RenderApplication final : public juce::JUCEApplication,
 {
 public:
     const juce::String getApplicationName() override { return "MidSide-670 Screenshot"; }
-    const juce::String getApplicationVersion() override { return "1.0.0"; }
+    const juce::String getApplicationVersion() override { return "2.0.0"; }
     bool moreThanOneInstanceAllowed() override { return true; }
     void anotherInstanceStarted (const juce::String&) override {}
     void systemRequestedQuit() override {}
