@@ -41,6 +41,10 @@ public:
         processor->prepareToPlay (48000.0, 1024);
         processor->setCurrentProgram (4); // M/S Drum Room, to show independent GR meters.
 
+        // Park the pointer away from the unit before it appears, so the captured
+        // snapshot never carries a stale hover highlight.
+        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition ({ 5.0f, 5.0f });
+
         editor = std::unique_ptr<juce::AudioProcessorEditor> (processor->createEditor());
 
         if (editor == nullptr)
@@ -97,7 +101,6 @@ private:
             return;
 
         stopTimer();
-        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition ({ 1900.0f, 1040.0f });
         const auto image = editor->createComponentSnapshot (editor->getLocalBounds(), true, 2.0f);
 
         if (image.isValid())

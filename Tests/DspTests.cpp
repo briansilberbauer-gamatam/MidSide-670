@@ -2,6 +2,7 @@
 #include "Parameters.h"
 #include "dsp/VariableMu.h"
 
+#include <array>
 #include <cmath>
 #include <iostream>
 
@@ -181,6 +182,25 @@ void testProcessor()
            "a side-only signal drives the side compressor");
     check (processor.getGainReductionMid() < 0.25f,
            "a side-only signal does not drive the mid compressor");
+
+    // Lock-free waveform telemetry must expose live, ordered min/max columns.
+    std::array<float, 64> waveformMin {};
+    std::array<float, 64> waveformMax {};
+    const int columns = processor.copyWaveform (waveformMin.data(), waveformMax.data(), 64);
+
+    bool validColumns = columns == 64;
+    bool liveWaveform = false;
+
+    for (int i = 0; i < columns; ++i)
+    {
+        validColumns = validColumns && waveformMax[static_cast<size_t> (i)]
+                                          >= waveformMin[static_cast<size_t> (i)];
+        liveWaveform = liveWaveform || waveformMax[static_cast<size_t> (i)] > 0.001f
+                                      || waveformMin[static_cast<size_t> (i)] < -0.001f;
+    }
+
+    check (validColumns, "waveform telemetry publishes ordered min/max columns");
+    check (liveWaveform, "waveform telemetry contains live audio");
 
     // Stereo mode should link the two detector gains.
     processor.setCurrentProgram (0);

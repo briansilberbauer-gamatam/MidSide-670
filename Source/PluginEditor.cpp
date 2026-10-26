@@ -1,14 +1,16 @@
 #include "PluginEditor.h"
 
 #include "Parameters.h"
+#include "Presets.h"
 #include "ui/Controls.h"
 #include "ui/Theme.h"
+#include "ui/WaveformDisplay.h"
 
 #include <array>
 #include <cmath>
 #include <utility>
 
-using namespace retro80s::ui;
+using namespace studio::ui;
 
 namespace
 {
@@ -70,44 +72,56 @@ public:
                                                 "M/S LINK", formatPercent);
         timeConstantKnob = std::make_unique<ParamKnob> (apvts, midside670::params::timeConstant,
                                                         "TIME CONSTANT", formatTimeConstant);
-        midTrimKnob = std::make_unique<ParamKnob> (apvts, midside670::params::midTrim,
-                                                   "MID COMP", formatDb);
-        sideTrimKnob = std::make_unique<ParamKnob> (apvts, midside670::params::sideTrim,
-                                                    "SIDE COMP", formatDb);
-        outputKnob = std::make_unique<ParamKnob> (apvts, midside670::params::outputGain,
-                                                  "OUTPUT GAIN", formatDb);
-        mixKnob = std::make_unique<ParamKnob> (apvts, midside670::params::mix,
-                                               "PARALLEL MIX", formatPercent);
         widthKnob = std::make_unique<ParamKnob> (apvts, midside670::params::width,
                                                  "STEREO WIDTH", formatPercent);
 
         for (auto* knob : { inputKnob.get(), tubeKnob.get(), hpfKnob.get(), thresholdKnob.get(),
                             ratioKnob.get(), linkKnob.get(), timeConstantKnob.get(),
-                            midTrimKnob.get(), sideTrimKnob.get(), outputKnob.get(),
-                            mixKnob.get(), widthKnob.get() })
+                            widthKnob.get() })
         {
             addAndMakeVisible (*knob);
         }
 
-        modeSwitch = std::make_unique<ModeSwitch> (apvts, midside670::params::mode);
-        addAndMakeVisible (*modeSwitch);
+        outputSlider = std::make_unique<GlassSlider> (apvts, midside670::params::outputGain,
+                                                      "OUTPUT", formatDb);
+        mixSlider = std::make_unique<GlassSlider> (apvts, midside670::params::mix,
+                                                   "PARALLEL MIX", formatPercent);
+        midSlider = std::make_unique<GlassSlider> (apvts, midside670::params::midTrim,
+                                                   "MID COMP", formatDb);
+        sideSlider = std::make_unique<GlassSlider> (apvts, midside670::params::sideTrim,
+                                                    "SIDE COMP", formatDb);
 
-        bypassButton = std::make_unique<LatchButton> (apvts, midside670::params::bypass, "BYPASS");
+        for (auto* slider : { outputSlider.get(), mixSlider.get(), midSlider.get(), sideSlider.get() })
+            addAndMakeVisible (*slider);
+
+        stereoButton = std::make_unique<ModeButton> (apvts, midside670::params::mode,
+                                                     midside670::params::stereoMode, "STEREO");
+        midSideButton = std::make_unique<ModeButton> (apvts, midside670::params::mode,
+                                                      midside670::params::midSideMode, "M/S");
+        autoButton = std::make_unique<TactileButton> (apvts, midside670::params::autoMakeup, "AUTO");
+        bypassButton = std::make_unique<TactileButton> (apvts, midside670::params::bypass, "BYPASS");
+
+        addAndMakeVisible (*stereoButton);
+        addAndMakeVisible (*midSideButton);
+        addAndMakeVisible (*autoButton);
         addAndMakeVisible (*bypassButton);
 
-        grMeter = std::make_unique<GainReductionMeter> (processor);
-        addAndMakeVisible (*grMeter);
-
-        outputMeter = std::make_unique<OutputMeter> (processor);
-        addAndMakeVisible (*outputMeter);
+        waveformDisplay = std::make_unique<WaveformDisplay> (processor);
+        addAndMakeVisible (*waveformDisplay);
 
         inputMeter = std::make_unique<InputMeter> (processor);
         addAndMakeVisible (*inputMeter);
 
-        presetBar = std::make_unique<PresetBar> (processor);
-        addAndMakeVisible (*presetBar);
+        outputMeter = std::make_unique<OutputMeter> (processor);
+        addAndMakeVisible (*outputMeter);
+
+        pillBar = std::make_unique<HeaderPillBar> (processor);
+        pillBar->onPresetChanged = [this] { repaint(); };
+        addAndMakeVisible (*pillBar);
 
         lastBypassed = isBypassed();
+        lastPreset = processor.getCurrentPresetIndex();
+        lastDirty = processor.isPresetDirty();
         startTimerHz (12);
     }
 
@@ -119,91 +133,67 @@ public:
     void paint (juce::Graphics& g) override
     {
         const auto bounds = getLocalBounds().toFloat();
-        drawChassis (g, bounds);
+        drawDesktopHardwareChassis (g, bounds);
 
-        const bool active = ! isBypassed();
+        paintBrandHeader (g);
 
-        paintHeader (g);
+        g.setColour (obsidianGrid.withAlpha (0.90f));
+        g.fillRect (52.0f, 97.0f, 1076.0f, 1.0f);
 
-        const juce::Rectangle<float> inputPanel (18.0f, 100.0f, 256.0f, 512.0f);
-        const juce::Rectangle<float> compressorPanel (286.0f, 100.0f, 604.0f, 512.0f);
-        const juce::Rectangle<float> outputPanel (902.0f, 100.0f, 260.0f, 512.0f);
+        drawEngravedLabel (g, { 52.0f, 102.0f, 244.0f, 26.0f },
+                           "INPUT STAGE", "TRANSFORMER COUPLED / TRIODE DRIVE");
+        drawEngravedLabel (g, { 328.0f, 318.0f, 524.0f, 26.0f },
+                           "GAIN COMPUTER", "DUAL DETECTOR / PROGRAM-DEPENDENT RELEASE");
+        drawEngravedLabel (g, { 884.0f, 102.0f, 244.0f, 26.0f },
+                           "MATRIX / OUTPUT", "WIDTH / PARALLEL / CHANNEL TRIM");
 
-        drawModulePanel (g, inputPanel, "01", "INPUT STAGE",
-                         "TRANSFORMER COUPLED / TRIODE DRIVE", active);
-        drawModulePanel (g, compressorPanel, "02", "VARIABLE-MU COMPRESSOR",
-                         "DUAL DETECTOR / PROGRAM-DEPENDENT RELEASE", active);
-        drawModulePanel (g, outputPanel, "03", "MATRIX / OUTPUT",
-                         "WIDTH / PARALLEL / TRANSFORMER OUT", active);
-
+        paintAnnotations (g);
         paintFooter (g);
-
-        // Small hardware annotations.
-        g.setColour (inkMuted);
-        g.setFont (font (5.8f, Weight::semibold, 0.12f));
-        g.drawText ("LEVEL / PEAK", 42.0f, 540.0f, 210.0f, 10.0f,
-                    juce::Justification::centredLeft, false);
-        g.drawText ("6DJ8 DUAL TRIODE MODEL", 42.0f, 558.0f, 210.0f, 10.0f,
-                    juce::Justification::centredLeft, false);
-        g.drawText ("DC-COUPLED / 4x OVERSAMPLED", 42.0f, 572.0f, 210.0f, 10.0f,
-                    juce::Justification::centredLeft, false);
-
-        g.setColour (inkMuted);
-        g.drawText ("600 OHM / TRANSFORMER BALANCED", 918.0f, 592.0f, 228.0f, 9.0f,
-                    juce::Justification::centredRight, false);
-
-        // Thin red calibration marks at the panel top corners.
-        for (const auto& panel : { inputPanel, compressorPanel, outputPanel })
-        {
-            g.setColour (signalRed.withAlpha (0.78f));
-            g.fillRect (panel.getX() + 8.0f, panel.getY() + 6.0f, 20.0f, 1.2f);
-            g.fillRect (panel.getRight() - 28.0f, panel.getY() + 6.0f, 20.0f, 1.2f);
-        }
-
-        if (isBypassed())
-        {
-            const auto strip = juce::Rectangle<float> (inputPanel.getX() + 8.0f,
-                                                        inputPanel.getBottom() - 10.0f,
-                                                        inputPanel.getWidth() - 16.0f, 2.0f);
-            g.setColour (signalRed.withAlpha (0.9f));
-            g.fillRect (strip);
-        }
     }
 
     void resized() override
     {
-        inputKnob->setBounds (38, 158, 216, 182);
-        tubeKnob->setBounds (30, 350, 108, 134);
-        hpfKnob->setBounds (154, 350, 108, 134);
-        inputMeter->setBounds (38, 498, 216, 38);
+        pillBar->setBounds (386, 44, 408, 36);
 
-        grMeter->setBounds (304, 152, 568, 138);
-        thresholdKnob->setBounds (310, 306, 164, 134);
-        ratioKnob->setBounds (500, 306, 164, 134);
-        linkKnob->setBounds (690, 306, 164, 134);
-        timeConstantKnob->setBounds (310, 454, 164, 134);
-        midTrimKnob->setBounds (500, 454, 164, 134);
-        sideTrimKnob->setBounds (690, 454, 164, 134);
+        stereoButton->setBounds (810, 48, 70, 30);
+        midSideButton->setBounds (886, 48, 70, 30);
+        autoButton->setBounds (962, 48, 76, 30);
+        bypassButton->setBounds (1044, 48, 84, 30);
 
-        outputKnob->setBounds (930, 154, 204, 170);
-        mixKnob->setBounds (912, 330, 116, 134);
-        widthKnob->setBounds (1016, 330, 116, 134);
-        outputMeter->setBounds (914, 480, 236, 104);
+        waveformDisplay->setBounds (328, 110, 524, 202);
 
-        modeSwitch->setBounds (806, 18, 236, 58);
-        bypassButton->setBounds (1052, 18, 96, 58);
+        inputKnob->setBounds (54, 128, 240, 196);
+        tubeKnob->setBounds (70, 340, 140, 154);
+        inputMeter->setBounds (60, 502, 228, 26);
 
-        presetBar->setBounds (38, 634, 620, 54);
+        thresholdKnob->setBounds (324, 344, 176, 126);
+        ratioKnob->setBounds (500, 344, 176, 126);
+        linkKnob->setBounds (676, 344, 176, 126);
+
+        timeConstantKnob->setBounds (324, 478, 176, 122);
+        hpfKnob->setBounds (500, 478, 176, 122);
+        widthKnob->setBounds (676, 478, 176, 122);
+
+        outputSlider->setBounds (884, 126, 58, 430);
+        mixSlider->setBounds (946, 126, 58, 430);
+        midSlider->setBounds (1008, 126, 58, 430);
+        sideSlider->setBounds (1070, 126, 58, 430);
+
+        outputMeter->setBounds (792, 614, 336, 38);
     }
 
 private:
     void timerCallback() override
     {
         const bool bypassed = isBypassed();
+        const int preset = processor.getCurrentPresetIndex();
+        const bool dirty = processor.isPresetDirty();
 
-        if (bypassed != lastBypassed)
+        if (bypassed != lastBypassed || preset != lastPreset || dirty != lastDirty)
         {
             lastBypassed = bypassed;
+            lastPreset = preset;
+            lastDirty = dirty;
             repaint();
         }
     }
@@ -216,111 +206,103 @@ private:
         return false;
     }
 
-    void paintHeader (juce::Graphics& g)
+    void paintBrandHeader (juce::Graphics& g)
     {
-        drawRedBadge (g, { 28.0f, 18.0f, 68.0f, 54.0f }, "670", "VARIABLE-MU");
-
-        // Embossed silkscreen title.
-        g.setColour (seamHighlight);
-        g.setFont (font (30.0f, Weight::black, 0.025f));
-        g.drawText ("MID/SIDE-670", 109, 11, 500, 39, juce::Justification::centredLeft, false);
-
-        g.setColour (inkBlack);
-        g.setFont (font (30.0f, Weight::black, 0.025f));
-        g.drawText ("MID/SIDE-670", 108, 10, 500, 39, juce::Justification::centredLeft, false);
-
-        g.setColour (inkCharcoal);
-        g.setFont (font (7.6f, Weight::semibold, 0.16f));
-        g.drawText ("VARIABLE-MU TUBE COMPRESSOR   /   TRUE MID-SIDE DYNAMICS",
-                    109, 51, 510, 13, juce::Justification::centredLeft, false);
-
-        g.setColour (signalRed);
-        g.fillRect (109.0f, 67.0f, 150.0f, 1.4f);
-
-        g.setColour (inkMuted);
-        g.setFont (font (6.4f, Weight::semibold, 0.16f));
-        g.drawText ("BLS AUDIO  /  SERIES 670  /  STEREO MATRIX",
-                    109, 73, 380, 10, juce::Justification::centredLeft, false);
-
-        g.setColour (inkMuted);
-        g.setFont (font (6.0f, Weight::semibold, 0.13f));
-        g.drawText ("4x OVERSAMPLED", 642, 59, 130, 9,
+        g.setColour (textSecondary.withAlpha (0.85f));
+        g.setFont (font (6.3f, Weight::semibold, 0.22f));
+        g.drawText ("BLS AUDIO  /  SERIES 670", 52, 38, 280, 9,
                     juce::Justification::centredLeft, false);
 
-        g.setColour (signalRed);
-        g.fillRect (1064.0f, 80.0f, 84.0f, 1.0f);
+        g.setColour (textPrimary);
+        g.setFont (font (21.0f, Weight::semibold, 0.04f));
+        g.drawText ("MIDSIDE-670", 52, 47, 320, 27,
+                    juce::Justification::centredLeft, false);
+
+        g.setColour (textSecondary);
+        g.setFont (font (6.6f, Weight::regular, 0.14f));
+        g.drawText ("VARIABLE-MU TUBE COMPRESSOR  /  TRUE MID-SIDE DYNAMICS",
+                    52, 75, 330, 9, juce::Justification::centredLeft, false);
+
+        g.setColour (crimsonAccent);
+        g.fillRect (52.0f, 87.0f, 54.0f, 1.4f);
+    }
+
+    void paintAnnotations (juce::Graphics& g)
+    {
+        g.setFont (font (6.0f, Weight::regular, 0.10f));
+        g.setColour (textMuted);
+
+        g.drawText ("6DJ8 DUAL TRIODE / TRANSFORMER COUPLED",
+                    54, 536, 236, 9, juce::Justification::centredLeft, false);
+        g.drawText ("DC-COUPLED / 4x OVERSAMPLED",
+                    54, 549, 236, 9, juce::Justification::centredLeft, false);
+        g.drawText ("NO FEEDBACK LOOP",
+                    54, 562, 236, 9, juce::Justification::centredLeft, false);
+
+        g.drawText ("600 OHM / TRANSFORMER BALANCED",
+                    884, 568, 244, 9, juce::Justification::centredLeft, false);
+        g.drawText ("TRUE M/S MATRIX / CONSTANT LATENCY",
+                    884, 581, 244, 9, juce::Justification::centredLeft, false);
     }
 
     void paintFooter (juce::Graphics& g)
     {
-        const auto footer = juce::Rectangle<float> (24.0f, 626.0f, 1132.0f, 70.0f);
+        g.setColour (obsidianGrid);
+        g.fillRect (52.0f, 608.0f, 1076.0f, 1.0f);
 
-        g.setColour (juce::Colours::black.withAlpha (0.28f));
-        g.fillRoundedRectangle (footer.translated (0.0f, 2.0f), 4.0f);
+        g.setColour (textMuted);
+        g.setFont (font (6.2f, Weight::semibold, 0.16f));
+        g.drawText ("PRESET CHARACTER", 52, 616, 240, 9,
+                    juce::Justification::centredLeft, false);
 
-        juce::ColourGradient fill (charcoalBezel, footer.getTopLeft(),
-                                   charcoalDeep, footer.getBottomLeft(), false);
-        fill.addColour (0.5, juce::Colour (0xff1d2025));
-        g.setGradientFill (fill);
-        g.fillRoundedRectangle (footer, 4.0f);
+        const int preset = processor.getCurrentPresetIndex();
+        const bool dirty = processor.isPresetDirty();
 
-        g.setColour (seamHighlight.withAlpha (0.55f));
-        g.drawRoundedRectangle (footer.reduced (0.7f), 3.5f, 0.8f);
-        g.setColour (signalRed.withAlpha (0.65f));
-        g.fillRect (footer.getX() + 3.0f, footer.getY() + 3.0f, footer.getWidth() - 6.0f, 1.0f);
+        g.setColour (textSecondary);
+        g.setFont (font (7.4f, Weight::regular, 0.08f));
+        g.drawFittedText (midside670::getFactoryPresetCharacter (preset),
+                          juce::Rectangle<int> (52, 628, 268, 22),
+                          juce::Justification::centredLeft, 2);
 
-        // Signal path chips.
-        const float chipY = 635.0f;
-        const float chipW = 76.0f;
-        const float chipGap = 14.0f;
-        float chipX = 680.0f;
+        drawCrimsonDot (g, { 55.0f, 660.0f }, 2.0f);
+
+        g.setColour (dirty ? crimsonBright : textMuted);
+        g.setFont (font (6.2f, Weight::semibold, 0.14f));
+        g.drawText (dirty ? "EDITED / UNSAVED" : "FACTORY / CLEAN",
+                    64, 655, 240, 9, juce::Justification::centredLeft, false);
+
+        // Signal-path chips.
         const std::array<const char*, 4> stages { "M/S ENCODE", "VARIABLE-MU", "M/S DECODE", "WIDTH" };
+        float chipX = 338.0f;
+        constexpr float chipW = 82.0f;
+        constexpr float chipGap = 12.0f;
 
         for (size_t i = 0; i < stages.size(); ++i)
         {
-            const auto chip = juce::Rectangle<float> (chipX, chipY, chipW, 19.0f);
-            g.setColour (charcoalDeep);
-            g.fillRoundedRectangle (chip, 2.0f);
-            g.setColour (signalRed.withAlpha (0.72f));
-            g.drawRoundedRectangle (chip.reduced (0.5f), 2.0f, 0.8f);
-            g.setColour (inkLightOnDark.withAlpha (0.90f));
-            g.setFont (font (5.8f, Weight::black, 0.10f));
-            g.drawText (stages[i], chip, juce::Justification::centred, false);
+            const auto chip = juce::Rectangle<float> (chipX, 620.0f, chipW, 18.0f);
+            drawSignalChip (g, chip, stages[i]);
 
             if (i + 1 < stages.size())
             {
-                g.setColour (signalRed.withAlpha (0.80f));
-                g.setFont (font (8.0f, Weight::black, 0.0f));
+                g.setColour (crimsonAccent.withAlpha (0.80f));
+                g.setFont (font (7.5f, Weight::semibold, 0.0f));
                 g.drawText (">", juce::Rectangle<float> (chip.getRight(), chip.getY(),
-                                                         chipGap, chip.getHeight()),
+                                                          chipGap, chip.getHeight()),
                             juce::Justification::centred, false);
             }
 
             chipX += chipW + chipGap;
         }
 
-        g.setColour (inkMutedOnDark);
+        g.setColour (textMuted);
         g.setFont (font (5.8f, Weight::semibold, 0.12f));
         g.drawText ("TRUE MID/SIDE MATRIX  //  4x OVERSAMPLED  //  CONSTANT-LATENCY BYPASS",
-                    680, 662, 360, 9, juce::Justification::centredLeft, false);
+                    338, 648, 420, 9, juce::Justification::centredLeft, false);
 
-        // Branding / format plate.
-        g.setColour (inkLightOnDark.withAlpha (0.92f));
-        g.setFont (font (7.6f, Weight::black, 0.12f));
-        g.drawText ("BLS AUDIO", 1030, 633, 120, 11,
-                    juce::Justification::centredRight, false);
-
-        const auto vst3Badge = juce::Rectangle<float> (1074.0f, 648.0f, 66.0f, 18.0f);
-        g.setColour (signalRed);
-        g.fillRoundedRectangle (vst3Badge, 1.5f);
-        g.setColour (inkLightOnDark);
-        g.setFont (font (7.2f, Weight::black, 0.18f));
-        g.drawText ("VST3", vst3Badge, juce::Justification::centred, false);
-
-        g.setColour (inkMutedOnDark);
-        g.setFont (font (5.5f, Weight::semibold, 0.12f));
-        g.drawText ("64-BIT FLOAT / 4x OS", 1010, 671, 140, 9,
-                    juce::Justification::centredRight, false);
+        g.setColour (textSecondary);
+        g.setFont (font (6.2f, Weight::semibold, 0.16f));
+        g.drawText ("BLS AUDIO  /  VST3  /  64-BIT FLOAT",
+                    792, 658, 336, 9, juce::Justification::centredRight, false);
     }
 
     MidSide670AudioProcessor& processor;
@@ -333,20 +315,26 @@ private:
     std::unique_ptr<ParamKnob> ratioKnob;
     std::unique_ptr<ParamKnob> linkKnob;
     std::unique_ptr<ParamKnob> timeConstantKnob;
-    std::unique_ptr<ParamKnob> midTrimKnob;
-    std::unique_ptr<ParamKnob> sideTrimKnob;
-    std::unique_ptr<ParamKnob> outputKnob;
-    std::unique_ptr<ParamKnob> mixKnob;
     std::unique_ptr<ParamKnob> widthKnob;
 
-    std::unique_ptr<ModeSwitch> modeSwitch;
-    std::unique_ptr<LatchButton> bypassButton;
-    std::unique_ptr<GainReductionMeter> grMeter;
-    std::unique_ptr<OutputMeter> outputMeter;
+    std::unique_ptr<GlassSlider> outputSlider;
+    std::unique_ptr<GlassSlider> mixSlider;
+    std::unique_ptr<GlassSlider> midSlider;
+    std::unique_ptr<GlassSlider> sideSlider;
+
+    std::unique_ptr<ModeButton> stereoButton;
+    std::unique_ptr<ModeButton> midSideButton;
+    std::unique_ptr<TactileButton> autoButton;
+    std::unique_ptr<TactileButton> bypassButton;
+
+    std::unique_ptr<WaveformDisplay> waveformDisplay;
     std::unique_ptr<InputMeter> inputMeter;
-    std::unique_ptr<PresetBar> presetBar;
+    std::unique_ptr<OutputMeter> outputMeter;
+    std::unique_ptr<HeaderPillBar> pillBar;
 
     bool lastBypassed = false;
+    int lastPreset = 0;
+    bool lastDirty = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidSide670EditorContent)
 };
@@ -379,7 +367,7 @@ MidSide670AudioProcessorEditor::~MidSide670AudioProcessorEditor()
 
 void MidSide670AudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (seamDark);
+    g.fillAll (studioSurfaceDark);
 }
 
 void MidSide670AudioProcessorEditor::resized()

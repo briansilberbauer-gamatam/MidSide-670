@@ -3,7 +3,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "PluginProcessor.h"
-#include "ui/RetroLookAndFeel.h"
+#include "ui/StudioLookAndFeel.h"
 
 #include <memory>
 
@@ -20,7 +20,7 @@ public:
 
 private:
     MidSide670AudioProcessor& processor;
-    retro80s::ui::RetroLookAndFeel lookAndFeel;
+    studio::ui::StudioLookAndFeel lookAndFeel;
     std::unique_ptr<MidSide670EditorContent> content;
     juce::TooltipWindow tooltipWindow { this, 650 };
 

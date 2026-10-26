@@ -4,6 +4,8 @@ A JUCE 8 VST3 / Standalone variable-mu tube compressor inspired by the classic F
 
 ![MidSide-670 interface](docs/midside670-ui.png)
 
+A dark brushed-gunmetal desktop unit under a flush, screwless glass overlay, with a crimson LED edge-glow, a top-centre pill readout, large machined knurled knobs, ultra-thin glass sliders and a central live waveform screen.
+
 ## Sound & architecture
 
 - **Fairchild-style variable-mu curve** — soft-knee, level-dependent ratio and a dual-envelope, program-dependent release.
@@ -49,7 +51,7 @@ L/R in
 
 ### Metering
 
-The smoked-acrylic dual bargraph displays **MID** and **SIDE** gain reduction in M/S mode and **L/R** plus **LINK** in Stereo mode. The output window shows L/R peaks, peak-hold ticks and a red peak jewel. A smaller LED strip shows input level.
+The central obsidian waveform screen shows the live post-processing signal as a three-layer glowing crimson trace over a dB/time grid, together with the current **MID** and **SIDE** gain reduction (or the linked **L/R** value in Stereo mode). A slim glass input strip sits under the input stage, and the footer carries a compact L/R output meter with peak-hold ticks and a clip bead.
 
 ## Factory presets
 
@@ -66,7 +68,7 @@ The smoked-acrylic dual bargraph displays **MID** and **SIDE** gain reduction in
 | 09 | Widescreen Strings | Soft sides, untouched centre |
 | 10 | Broken Radio | Saturated, squashed, small |
 
-Presets are exposed as host programs and also selectable from the footer browser.
+Presets are exposed as host programs and also selectable from the top pill readout: click the name for the preset menu, or use the `<` / `>` chevrons to step through the factory library.
 
 ## Build
 
@@ -98,7 +100,7 @@ On a machine without the offline cache, CMake falls back to `FetchContent` for J
 DISPLAY=:0 "./build/MidSide670Screenshot_artefacts/Release/MidSide-670 Screenshot" --out=dist/midside670-ui.png
 ```
 
-The offline tests cover matrix unity, time-constant ordering, gain-reduction response, independent vs linked detection, 4× oversampling, finite audio, bypass latency, and state restoration. The host test scans the built VST3 bundle, instantiates it, runs audio, checks all programs, and round-trips host state.
+The offline tests cover matrix unity, time-constant ordering, gain-reduction response, independent vs linked detection, 4× oversampling, finite audio, bypass latency, lock-free waveform telemetry, and state restoration. The host test scans the built VST3 bundle, instantiates it, runs audio, checks all programs, and round-trips host state.
 
 ## Install
 

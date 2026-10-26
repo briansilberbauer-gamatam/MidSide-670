@@ -4,16 +4,26 @@
 
 #include "Theme.h"
 
-namespace retro80s::ui
+namespace studio::ui
 {
-    class RetroLookAndFeel final : public juce::LookAndFeel_V4
+    // Procedural harshware renderer: low-profile knurled metal knobs, ultra-thin
+    // recessed glass sliders and red-glowing tactile buttons.
+    class StudioLookAndFeel final : public juce::LookAndFeel_V4
     {
     public:
-        RetroLookAndFeel();
+        StudioLookAndFeel();
 
         void drawRotarySlider (juce::Graphics&, int x, int y, int width, int height,
                                float sliderPosProportional, float rotaryStartAngle,
                                float rotaryEndAngle, juce::Slider&) override;
+
+        void drawLinearSlider (juce::Graphics&, int x, int y, int width, int height,
+                               float sliderPos, float minSliderPos, float maxSliderPos,
+                               const juce::Slider::SliderStyle, juce::Slider&) override;
+
+        void drawToggleButton (juce::Graphics&, juce::ToggleButton&,
+                               bool shouldDrawButtonAsHighlighted,
+                               bool shouldDrawButtonAsDown) override;
 
         void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour& backgroundColour,
                                    bool shouldDrawButtonAsHighlighted,
@@ -41,5 +51,8 @@ namespace retro80s::ui
                                         int& idealHeight) override;
 
         void drawTooltip (juce::Graphics&, const juce::String& text, int width, int height) override;
+
+    private:
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StudioLookAndFeel)
     };
-} // namespace retro80s::ui
+} // namespace studio::ui

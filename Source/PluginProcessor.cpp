@@ -137,6 +137,91 @@ void MidSide670AudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     outputLevelRight.store (0.0f, std::memory_order_relaxed);
     gainReductionMid.store (0.0f, std::memory_order_relaxed);
     gainReductionSide.store (0.0f, std::memory_order_relaxed);
+
+    // Keep roughly 750 waveform columns per second at any sample rate, which
+    // gives the display a ~0.7 second window at its 512-column view.
+    waveformSamplesPerColumn = juce::jmax (8, juce::roundToInt (currentSampleRate / 750.0));
+    resetWaveformHistory();
+}
+
+void MidSide670AudioProcessor::resetWaveformHistory() noexcept
+{
+    for (auto& value : waveformMin)
+        value.store (0.0f, std::memory_order_relaxed);
+
+    for (auto& value : waveformMax)
+        value.store (0.0f, std::memory_order_relaxed);
+
+    waveformWriteCount.store (0, std::memory_order_relaxed);
+    waveformAccumulatedSamples = 0;
+    waveformAccumulatedMin = 0.0f;
+    waveformAccumulatedMax = 0.0f;
+}
+
+void MidSide670AudioProcessor::captureWaveform (const juce::AudioBuffer<float>& buffer,
+                                                int numSamples) noexcept
+{
+    const int columnSize = juce::jmax (1, waveformSamplesPerColumn);
+
+    auto sanitise = [] (float value)
+    {
+        return std::isfinite (value) ? juce::jlimit (-1.0f, 1.0f, value) : 0.0f;
+    };
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        // Follow the true stereo envelope, so anti-phase and side-only material
+        // does not cancel out of the display the way a raw L+R sum would.
+        const float left = sanitise (buffer.getSample (0, i));
+        const float right = sanitise (buffer.getSample (1, i));
+        const float columnMin = juce::jmin (left, right);
+        const float columnMax = juce::jmax (left, right);
+
+        if (waveformAccumulatedSamples == 0)
+        {
+            waveformAccumulatedMin = columnMin;
+            waveformAccumulatedMax = columnMax;
+        }
+        else
+        {
+            waveformAccumulatedMin = juce::jmin (waveformAccumulatedMin, columnMin);
+            waveformAccumulatedMax = juce::jmax (waveformAccumulatedMax, columnMax);
+        }
+
+        if (++waveformAccumulatedSamples < columnSize)
+            continue;
+
+        const auto writeIndex = waveformWriteCount.load (std::memory_order_relaxed);
+        const auto slot = static_cast<size_t> (writeIndex % static_cast<juce::uint32> (waveformCapacity));
+        waveformMin[slot].store (waveformAccumulatedMin, std::memory_order_relaxed);
+        waveformMax[slot].store (waveformAccumulatedMax, std::memory_order_relaxed);
+        waveformWriteCount.store (writeIndex + 1, std::memory_order_release);
+
+        waveformAccumulatedSamples = 0;
+    }
+}
+
+int MidSide670AudioProcessor::copyWaveform (float* minColumns, float* maxColumns,
+                                            int maxColumnCount) const noexcept
+{
+    if (minColumns == nullptr || maxColumns == nullptr || maxColumnCount <= 0)
+        return 0;
+
+    const auto written = waveformWriteCount.load (std::memory_order_acquire);
+    const int available = static_cast<int> (
+        juce::jmin<juce::uint32> (written, static_cast<juce::uint32> (waveformCapacity)));
+    const int count = juce::jmin (available, maxColumnCount);
+    const auto start = written - static_cast<juce::uint32> (count);
+
+    for (int i = 0; i < count; ++i)
+    {
+        const auto slot = static_cast<size_t> ((start + static_cast<juce::uint32> (i))
+                                               % static_cast<juce::uint32> (waveformCapacity));
+        minColumns[i] = waveformMin[slot].load (std::memory_order_relaxed);
+        maxColumns[i] = waveformMax[slot].load (std::memory_order_relaxed);
+    }
+
+    return count;
 }
 
 void MidSide670AudioProcessor::releaseResources()
@@ -284,6 +369,8 @@ void MidSide670AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     outputLevelRight.store (std::isfinite (outputRightPeak) ? outputRightPeak : 0.0f, std::memory_order_relaxed);
     gainReductionMid.store (std::isfinite (peakMidGr) ? peakMidGr : 0.0f, std::memory_order_relaxed);
     gainReductionSide.store (std::isfinite (peakSideGr) ? peakSideGr : 0.0f, std::memory_order_relaxed);
+
+    captureWaveform (buffer, numSamples);
 }
 
 juce::AudioProcessorEditor* MidSide670AudioProcessor::createEditor()

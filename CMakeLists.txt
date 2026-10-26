@@ -43,10 +43,12 @@ set(MIDSIDE670_SOURCES
     Source/dsp/VariableMu.h
     Source/ui/Theme.cpp
     Source/ui/Theme.h
-    Source/ui/RetroLookAndFeel.cpp
-    Source/ui/RetroLookAndFeel.h
+    Source/ui/StudioLookAndFeel.cpp
+    Source/ui/StudioLookAndFeel.h
     Source/ui/Controls.cpp
-    Source/ui/Controls.h)
+    Source/ui/Controls.h
+    Source/ui/WaveformDisplay.cpp
+    Source/ui/WaveformDisplay.h)
 
 set(MIDSIDE670_DEFINITIONS
     JUCE_WEB_BROWSER=0

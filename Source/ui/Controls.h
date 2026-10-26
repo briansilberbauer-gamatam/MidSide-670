@@ -9,10 +9,10 @@
 #include <functional>
 #include <memory>
 
-namespace retro80s::ui
+namespace studio::ui
 {
     //==================================================================================
-    // Physical fluted knob with silkscreened caption and a recessed counter window.
+    // Low-profile heavy-machined knurled metal knob with caption and value readout.
     //==================================================================================
     class ParamKnob final : public juce::Component,
                             private juce::Timer
@@ -21,8 +21,7 @@ namespace retro80s::ui
         ParamKnob (juce::AudioProcessorValueTreeState&,
                    const juce::String& parameterID,
                    juce::String caption,
-                   std::function<juce::String (float)> formatter,
-                   juce::Colour accent = signalRed);
+                   std::function<juce::String (float)> formatter);
 
         ~ParamKnob() override;
 
@@ -39,7 +38,6 @@ namespace retro80s::ui
         juce::String parameterID;
         juce::String captionText;
         std::function<juce::String (float)> formatValue;
-        juce::Colour accentColour;
 
         juce::Slider slider;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
@@ -50,108 +48,83 @@ namespace retro80s::ui
     };
 
     //==================================================================================
-    // Two-position mechanical slide switch for STEREO / MID-SIDE.
+    // Ultra-thin vertical glass slider inset into the panel surface.
     //==================================================================================
-    class ModeSwitch final : public juce::Component,
-                             private juce::Timer
-    {
-    public:
-        ModeSwitch (juce::AudioProcessorValueTreeState&, const juce::String& parameterID);
-
-        void paint (juce::Graphics&) override;
-        void mouseDown (const juce::MouseEvent&) override;
-        void mouseDrag (const juce::MouseEvent&) override;
-
-        bool isMidSide() const noexcept;
-
-    private:
-        void timerCallback() override;
-        void setFromX (float x);
-
-        juce::AudioProcessorValueTreeState& apvts;
-        juce::String parameterID;
-        juce::RangedAudioParameter* parameter = nullptr;
-        bool lastMidSide = true;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModeSwitch)
-    };
-
-    //==================================================================================
-    // Cassette-deck style latching push key with a rectangular red LED lens.
-    //==================================================================================
-    class LatchButton final : public juce::Button
-    {
-    public:
-        LatchButton (juce::AudioProcessorValueTreeState&,
-                     const juce::String& parameterID,
-                     const juce::String& text,
-                     juce::Colour accent = signalRed);
-
-        void paintButton (juce::Graphics&, bool shouldDrawButtonAsHighlighted,
-                          bool shouldDrawButtonAsDown) override;
-
-    private:
-        juce::Colour accentColour;
-        std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LatchButton)
-    };
-
-    //==================================================================================
-    // Smoked-acrylic dual bargraph for variable-mu gain reduction.
-    //==================================================================================
-    class GainReductionMeter final : public juce::Component,
-                                     private juce::Timer
-    {
-    public:
-        explicit GainReductionMeter (MidSide670AudioProcessor&);
-
-        void paint (juce::Graphics&) override;
-
-    private:
-        void timerCallback() override;
-        void drawMeterRow (juce::Graphics&, juce::Rectangle<float> bounds,
-                           const juce::String& label, float grDb, bool allRed) const;
-
-        MidSide670AudioProcessor& processor;
-        const std::atomic<float>* modeParameter = nullptr;
-        float displayMid = 0.0f;
-        float displaySide = 0.0f;
-        bool midSide = true;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainReductionMeter)
-    };
-
-    //==================================================================================
-    // Dual L/R discrete output bargraph with peak hold and a red CLIP jewel.
-    //==================================================================================
-    class OutputMeter final : public juce::Component,
+    class GlassSlider final : public juce::Component,
                               private juce::Timer
     {
     public:
-        explicit OutputMeter (MidSide670AudioProcessor&);
+        GlassSlider (juce::AudioProcessorValueTreeState&,
+                     const juce::String& parameterID,
+                     juce::String caption,
+                     std::function<juce::String (float)> formatter);
+
+        ~GlassSlider() override;
 
         void paint (juce::Graphics&) override;
+        void resized() override;
+        void mouseEnter (const juce::MouseEvent&) override;
+        void mouseExit (const juce::MouseEvent&) override;
 
     private:
         void timerCallback() override;
-        void drawChannel (juce::Graphics&, juce::Rectangle<float> bounds, const juce::String& label,
-                          float normalisedLevel, float normalisedPeak) const;
+        void refreshValueText();
 
-        MidSide670AudioProcessor& processor;
-        float levelLeft = 0.0f;
-        float levelRight = 0.0f;
-        float peakLeft = 0.0f;
-        float peakRight = 0.0f;
-        int peakHoldLeft = 0;
-        int peakHoldRight = 0;
-        int clipHold = 0;
+        juce::AudioProcessorValueTreeState& apvts;
+        juce::String parameterID;
+        juce::String captionText;
+        std::function<juce::String (float)> formatValue;
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OutputMeter)
+        juce::Slider slider;
+        std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
+        juce::String valueText;
+        bool hover = false;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlassSlider)
     };
 
     //==================================================================================
-    // Small input-level LED strip in the input stage module.
+    // Rectangular low-profile tactile button attached to a boolean parameter.
+    //==================================================================================
+    class TactileButton final : public juce::ToggleButton
+    {
+    public:
+        TactileButton (juce::AudioProcessorValueTreeState&,
+                       const juce::String& parameterID,
+                       const juce::String& labelText);
+
+    private:
+        std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TactileButton)
+    };
+
+    //==================================================================================
+    // One position of a two-way tactile mode selector (STEREO / MID-SIDE).
+    //==================================================================================
+    class ModeButton final : public juce::ToggleButton,
+                             private juce::Timer
+    {
+    public:
+        ModeButton (juce::AudioProcessorValueTreeState&,
+                    const juce::String& parameterID,
+                    int choiceIndex,
+                    const juce::String& labelText);
+
+    private:
+        void timerCallback() override;
+
+        juce::AudioProcessorValueTreeState& apvts;
+        juce::String parameterID;
+        int choiceIndex;
+        juce::RangedAudioParameter* parameter = nullptr;
+        std::atomic<float>* rawValue = nullptr;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModeButton)
+    };
+
+    //==================================================================================
+    // Slim glass input level strip in the input stage zone.
     //==================================================================================
     class InputMeter final : public juce::Component,
                              private juce::Timer
@@ -171,29 +144,63 @@ namespace retro80s::ui
     };
 
     //==================================================================================
-    // Factory preset browser with mechanical previous/next keys and EDIT badge.
+    // Compact L/R output level strip with peak hold and a clip bead.
     //==================================================================================
-    class PresetBar final : public juce::Component,
-                            private juce::Timer
+    class OutputMeter final : public juce::Component,
+                              private juce::Timer
     {
     public:
-        explicit PresetBar (MidSide670AudioProcessor&);
+        explicit OutputMeter (MidSide670AudioProcessor&);
 
         void paint (juce::Graphics&) override;
-        void resized() override;
 
     private:
         void timerCallback() override;
-        void step (int delta);
+        void drawChannel (juce::Graphics&, juce::Rectangle<float> bounds,
+                          const juce::String& label, float normalisedLevel,
+                          float normalisedPeak) const;
 
         MidSide670AudioProcessor& processor;
-        juce::ComboBox presetBox;
-        juce::TextButton previousButton;
-        juce::TextButton nextButton;
+        float levelLeft = 0.0f;
+        float levelRight = 0.0f;
+        float peakLeft = 0.0f;
+        float peakRight = 0.0f;
+        int peakHoldLeft = 0;
+        int peakHoldRight = 0;
+        int clipHold = 0;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OutputMeter)
+    };
+
+    //==================================================================================
+    // Slender top-centre pill readout with preset name and chevron navigation.
+    //==================================================================================
+    class HeaderPillBar final : public juce::Component,
+                                private juce::Timer
+    {
+    public:
+        explicit HeaderPillBar (MidSide670AudioProcessor&);
+
+        void paint (juce::Graphics&) override;
+        void mouseMove (const juce::MouseEvent&) override;
+        void mouseExit (const juce::MouseEvent&) override;
+        void mouseUp (const juce::MouseEvent&) override;
+
+        std::function<void()> onPresetChanged;
+
+    private:
+        enum class Zone { none, previous, next, readout };
+
+        void timerCallback() override;
+        void step (int delta);
+        void showPresetMenu();
+        Zone zoneAt (float x) const;
+
+        MidSide670AudioProcessor& processor;
         int lastPreset = -1;
         bool lastDirty = false;
-        bool syncing = false;
+        Zone hoverZone = Zone::none;
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PresetBar)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderPillBar)
     };
-} // namespace retro80s::ui
+} // namespace studio::ui

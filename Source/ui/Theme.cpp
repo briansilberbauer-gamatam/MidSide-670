@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace retro80s::ui
+namespace studio::ui
 {
 namespace
 {
@@ -46,237 +46,182 @@ juce::Font font (float height, Weight weight, float tracking)
     return result;
 }
 
-void drawPlasticSeamHorizontal (juce::Graphics& g, float x1, float x2, float y)
+void drawDesktopHardwareChassis (juce::Graphics& g, juce::Rectangle<float> fullBounds)
 {
-    g.setColour (seamDark);
-    g.fillRect (x1, y, x2 - x1, 1.0f);
-    g.setColour (seamHighlight);
-    g.fillRect (x1, y + 1.0f, x2 - x1, 1.0f);
-}
+    // 1. Dark studio surface with an upper-left soft-box falloff.
+    juce::ColourGradient studioGradient (studioSurfaceLight, fullBounds.getTopLeft(),
+                                         studioSurfaceDark, fullBounds.getBottomRight(), true);
+    g.setGradientFill (studioGradient);
+    g.fillRect (fullBounds);
 
-void drawPlasticSeamVertical (juce::Graphics& g, float x, float y1, float y2)
-{
-    g.setColour (seamDark);
-    g.fillRect (x, y1, 1.0f, y2 - y1);
-    g.setColour (seamHighlight);
-    g.fillRect (x + 1.0f, y1, 1.0f, y2 - y1);
-}
+    // Inset desktop unit so it rests visibly on the studio surface.
+    const auto unitBounds = fullBounds.reduced (18.0f, 16.0f);
+    constexpr float outerCorner = 14.0f;
 
-void drawRecessedScrew (juce::Graphics& g, juce::Point<float> centre, float radius)
-{
-    const juce::Rectangle<float> well (centre.x - radius, centre.y - radius,
-                                       radius * 2.0f, radius * 2.0f);
-    g.setColour (seamDark);
-    g.fillEllipse (well);
-    g.setColour (seamHighlight.withAlpha (0.85f));
-    g.drawEllipse (well.translated (0.5f, 0.5f), 0.8f);
-
-    const auto head = well.reduced (1.2f);
-    juce::ColourGradient grad (silverMid, head.getTopLeft(), silverShadow, head.getBottomRight(), false);
-    g.setGradientFill (grad);
-    g.fillEllipse (head);
-
-    g.setColour (charcoalDeep.withAlpha (0.85f));
-    g.drawLine (centre.x - radius * 0.48f, centre.y,
-                centre.x + radius * 0.48f, centre.y, 1.1f);
-    g.drawLine (centre.x, centre.y - radius * 0.48f,
-                centre.x, centre.y + radius * 0.48f, 1.1f);
-}
-
-void drawChassis (juce::Graphics& g, juce::Rectangle<float> bounds)
-{
-    juce::ColourGradient base (silverLight.brighter (0.06f), bounds.getTopLeft(),
-                               silverMid, bounds.getBottomLeft(), false);
-    base.addColour (0.46, silverBase);
-    g.setGradientFill (base);
-    g.fillRect (bounds);
-
-    // Very fine moulded-plastic brushing, visible only as a directional sheen.
-    for (float y = bounds.getY() + 2.0f; y < bounds.getBottom(); y += 3.0f)
+    // 2. Soft-box cast shadow toward the bottom right.
+    for (int i = 5; i >= 1; --i)
     {
-        g.setColour (juce::Colours::white.withAlpha (y < bounds.getCentreY() ? 0.018f : 0.010f));
-        g.fillRect (bounds.getX(), y, bounds.getWidth(), 1.0f);
+        const float spread = static_cast<float> (i) * 3.2f;
+        const float offset = static_cast<float> (i) * 2.4f;
+        g.setColour (dropShadowDeep.withAlpha (0.16f));
+        g.fillRoundedRectangle (unitBounds.expanded (spread * 0.4f).translated (offset, offset * 1.15f),
+                                outerCorner + spread * 0.25f);
     }
 
-    // Outer moulded bevel.
-    g.setColour (seamHighlight); // top / left catchlight
-    g.fillRect (bounds.getX(), bounds.getY(), bounds.getWidth(), 2.0f);
-    g.fillRect (bounds.getX(), bounds.getY(), 2.0f, bounds.getHeight());
-    g.setColour (silverShadow);
-    g.fillRect (bounds.getX(), bounds.getBottom() - 2.0f, bounds.getWidth(), 2.0f);
-    g.fillRect (bounds.getRight() - 2.0f, bounds.getY(), 2.0f, bounds.getHeight());
-    g.setColour (seamDark.withAlpha (0.75f));
-    g.drawRect (bounds.reduced (2.0f), 1.0f);
+    // 3. Dimensional lower-right matte chamfered base extrusion.
+    const auto extrudedBase = unitBounds.translated (3.5f, 5.0f);
+    juce::ColourGradient skirtGradient (chamferLight, extrudedBase.getTopLeft(),
+                                        chamferDark, extrudedBase.getBottomRight(), false);
+    g.setGradientFill (skirtGradient);
+    g.fillRoundedRectangle (extrudedBase, outerCorner);
 
-    // Header parting seam and footer seam.
-    drawPlasticSeamHorizontal (g, bounds.getX() + 8.0f, bounds.getRight() - 8.0f, 90.0f);
-    drawPlasticSeamHorizontal (g, bounds.getX() + 8.0f, bounds.getRight() - 8.0f, 618.0f);
+    // 4. Smoothly chamfered matte outer metal rim.
+    juce::ColourGradient chamferGradient (chamferLight, unitBounds.getTopLeft(),
+                                          chamferDark, unitBounds.getBottomRight(), false);
+    g.setGradientFill (chamferGradient);
+    g.fillRoundedRectangle (unitBounds, outerCorner);
 
-    // Recessed screw wells at the four corners.
-    drawRecessedScrew (g, { 31.0f, 31.0f });
-    drawRecessedScrew (g, { bounds.getRight() - 31.0f, 31.0f });
-    drawRecessedScrew (g, { 31.0f, bounds.getBottom() - 30.0f });
-    drawRecessedScrew (g, { bounds.getRight() - 31.0f, bounds.getBottom() - 30.0f });
+    // 5. Dark gunmetal brushed metal base with fine horizontal grain.
+    const auto metalBase = unitBounds.reduced (4.5f);
+    constexpr float metalCorner = 10.5f;
+    juce::ColourGradient metalGradient (gunmetalLight, metalBase.getTopLeft(),
+                                        gunmetalDeep, metalBase.getBottomRight(), false);
+    metalGradient.addColour (0.45, gunmetalBase);
+    g.setGradientFill (metalGradient);
+    g.fillRoundedRectangle (metalBase, metalCorner);
 
-    // Top ventilation bank, kept clear of all controls.
-    drawVentSlots (g, { 642.0f, 25.0f, 130.0f, 33.0f }, 6);
-
-    // Tiny moulding pips under the header.
-    for (int i = 0; i < 9; ++i)
     {
-        const float x = 300.0f + static_cast<float> (i) * 13.0f;
-        g.setColour (seamDark.withAlpha (0.28f));
-        g.fillEllipse (x, 84.0f, 2.4f, 2.4f);
-        g.setColour (seamHighlight.withAlpha (0.55f));
-        g.fillEllipse (x, 85.2f, 2.4f, 1.2f);
+        juce::Graphics::ScopedSaveState state (g);
+        juce::Path clip;
+        clip.addRoundedRectangle (metalBase, metalCorner);
+        g.reduceClipRegion (clip);
+
+        const int yStart = static_cast<int> (metalBase.getY());
+        const int yEnd   = static_cast<int> (metalBase.getBottom());
+        const float x1   = metalBase.getX();
+        const float w    = metalBase.getWidth();
+
+        for (int y = yStart; y < yEnd; y += 2)
+        {
+            const float fy = static_cast<float> (y);
+            g.setColour (juce::Colours::white.withAlpha ((y % 6 == 0) ? 0.032f : 0.016f));
+            g.fillRect (x1, fy, w, 1.0f);
+            g.setColour (juce::Colours::black.withAlpha (0.075f));
+            g.fillRect (x1, fy + 1.0f, w, 1.0f);
+        }
     }
-}
 
-void drawModulePanel (juce::Graphics& g,
-                      juce::Rectangle<float> bounds,
-                      const juce::String& number,
-                      const juce::String& title,
-                      const juce::String& subtitle,
-                      bool active)
-{
-    constexpr float corner = 4.5f;
+    // 6. Thick, seamless transparent glass overlay. No screws or fasteners.
+    const auto glassPanel = metalBase.reduced (6.0f);
+    constexpr float glassCorner = 8.0f;
 
-    // Recessed seam around the module.
-    g.setColour (juce::Colours::black.withAlpha (0.20f));
-    g.fillRoundedRectangle (bounds.translated (0.0f, 2.0f), corner);
-    g.setColour (seamDark);
-    g.drawRoundedRectangle (bounds, corner, 1.0f);
-    g.setColour (seamHighlight);
-    g.drawRoundedRectangle (bounds.translated (0.0f, 1.0f), corner, 1.0f);
+    juce::ColourGradient glassBodyGradient (glassTintTop, glassPanel.getTopLeft(),
+                                            glassTintBottom, glassPanel.getBottomRight(), false);
+    g.setGradientFill (glassBodyGradient);
+    g.fillRoundedRectangle (glassPanel, glassCorner);
 
-    // Brushed silver face.
-    auto inner = bounds.reduced (1.5f);
-    juce::ColourGradient panelGrad (silverLight, inner.getTopLeft(),
-                                    silverMid, inner.getBottomLeft(), false);
-    panelGrad.addColour (0.5, silverBase);
-    g.setGradientFill (panelGrad);
-    g.fillRoundedRectangle (inner, corner - 1.0f);
-
-    // Silkscreened signal-red frame.
-    auto redFrame = inner.reduced (7.0f);
-    g.setColour (signalRed);
-    g.drawRoundedRectangle (redFrame, 2.5f, 1.5f);
-
-    // Red module-header bar.
-    auto header = redFrame.removeFromTop (25.0f);
-    juce::ColourGradient redGrad (signalRed, header.getTopLeft(),
-                                  signalRedDark, header.getBottomLeft(), false);
-    g.setGradientFill (redGrad);
-    g.fillRect (header);
-
-    auto numberBox = header.removeFromLeft (31.0f).reduced (4.0f, 3.0f);
-    g.setColour (charcoalDeep);
-    g.fillRoundedRectangle (numberBox, 2.0f);
-    g.setColour (inkLightOnDark);
-    g.setFont (font (10.0f, Weight::black, 0.08f));
-    g.drawText (number, numberBox, juce::Justification::centred, false);
-
-    g.setColour (inkLightOnDark);
-    g.setFont (font (11.5f, Weight::black, 0.075f));
-    g.drawText (title, header.reduced (7.0f, 0.0f), juce::Justification::centredLeft, false);
-
-    // Hardware status badge (never dims the whole module).
-    auto statusBox = juce::Rectangle<float> (redFrame.getRight() - 46.0f,
-                                             header.getY() + 6.0f, 42.0f, 13.0f);
-    g.setColour (active ? charcoalDeep.withAlpha (0.82f) : signalRedDark);
-    g.fillRoundedRectangle (statusBox, 2.0f);
-    g.setColour (active ? ledGreenLit.withAlpha (0.92f) : inkLightOnDark);
-    g.setFont (font (7.0f, Weight::black, 0.12f));
-    g.drawText (active ? "ACTIVE" : "BYPASS", statusBox, juce::Justification::centred, false);
-
-    // Subtitle silkscreen on silver, directly below the red bar.
-    const auto subStrip = juce::Rectangle<float> (inner.getX() + 14.0f, header.getBottom() + 6.0f,
-                                                  inner.getWidth() - 28.0f, 13.0f);
-    g.setColour (inkCharcoal);
-    g.setFont (font (7.5f, Weight::semibold, 0.15f));
-    g.drawText (subtitle, subStrip, juce::Justification::centredLeft, false);
-
-    // Bottom injection seam.
-    g.setColour (seamDark.withAlpha (0.38f));
-    g.fillRect (inner.getX() + 7.0f, inner.getBottom() - 8.0f, inner.getWidth() - 14.0f, 1.0f);
-    g.setColour (seamHighlight.withAlpha (0.55f));
-    g.fillRect (inner.getX() + 7.0f, inner.getBottom() - 7.0f, inner.getWidth() - 14.0f, 1.0f);
-}
-
-void drawSmokedBezel (juce::Graphics& g, juce::Rectangle<float> bounds)
-{
-    // Outer moulded charcoal bezel.
-    g.setColour (juce::Colours::black.withAlpha (0.30f));
-    g.fillRoundedRectangle (bounds.translated (0.0f, 2.0f), 4.5f);
-    g.setColour (seamHighlight.withAlpha (0.70f));
-    g.fillRoundedRectangle (bounds.translated (0.0f, 1.0f), 4.0f);
-    g.setColour (charcoalBezel);
-    g.fillRoundedRectangle (bounds, 4.0f);
-
-    // Inner red silkscreen pinstripe.
-    auto redRim = bounds.reduced (3.0f);
-    g.setColour (signalRed);
-    g.drawRoundedRectangle (redRim, 2.5f, 1.2f);
-
-    // Deep smoked-acrylic cavity.
-    auto glass = bounds.reduced (5.0f);
-    g.setColour (smokedWindow);
-    g.fillRoundedRectangle (glass, 2.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.65f));
-    g.fillRoundedRectangle (glass.reduced (2.0f).withHeight (3.0f), 1.0f);
-
-    // Clear-plastic diagonal reflection.
-    juce::Path reflection;
-    reflection.startNewSubPath (glass.getX() + glass.getWidth() * 0.10f, glass.getY());
-    reflection.lineTo (glass.getX() + glass.getWidth() * 0.25f, glass.getY());
-    reflection.lineTo (glass.getX() + glass.getWidth() * 0.16f, glass.getBottom());
-    reflection.lineTo (glass.getX() + glass.getWidth() * 0.01f, glass.getBottom());
-    reflection.closeSubPath();
-    g.setColour (juce::Colours::white.withAlpha (0.045f));
-    g.fillPath (reflection);
-}
-
-void drawVentSlots (juce::Graphics& g, juce::Rectangle<float> bounds, int count)
-{
-    const float height = 2.6f;
-    const float gap = (bounds.getHeight() - static_cast<float> (count) * height)
-                      / static_cast<float> (juce::jmax (1, count - 1));
-
-    for (int i = 0; i < count; ++i)
+    // 7. Crimson LED edge-glow and inward refraction through the clear glass perimeter.
+    for (int ring = 4; ring >= 1; --ring)
     {
-        const float y = bounds.getY() + static_cast<float> (i) * (height + gap);
-        g.setColour (charcoalDeep);
-        g.fillRoundedRectangle (bounds.getX(), y, bounds.getWidth(), height, 1.2f);
-        g.setColour (seamHighlight.withAlpha (0.40f));
-        g.fillRect (bounds.getX() + 1.0f, y + height, bounds.getWidth() - 2.0f, 1.0f);
+        const float inset = static_cast<float> (ring) * 2.2f;
+        const float alpha = (5 - ring) * 0.038f;
+        g.setColour (crimsonGlow.withAlpha (alpha));
+        g.drawRoundedRectangle (glassPanel.reduced (inset),
+                                juce::jmax (2.0f, glassCorner - inset * 0.5f), 2.2f);
+    }
+
+    // Crisp low-profile crimson LED light-pipe, strongest along the vertical edges.
+    juce::ColourGradient edgeGlowGradient (crimsonBright.withAlpha (0.78f), glassPanel.getTopLeft(),
+                                           crimsonAccent.withAlpha (0.52f), glassPanel.getBottomRight(), false);
+    edgeGlowGradient.addColour (0.5, crimsonAccent.withAlpha (0.85f));
+    g.setGradientFill (edgeGlowGradient);
+    g.drawRoundedRectangle (glassPanel, glassCorner, 1.35f);
+
+    // Polished glass top-left specular bevel.
+    g.setColour (glassRimHighlight);
+    g.drawRoundedRectangle (glassPanel.reduced (1.2f), glassCorner - 1.0f, 0.8f);
+
+    // 8. Upper-left studio soft-box glossy reflection sweeping across the glass.
+    {
+        juce::Graphics::ScopedSaveState state (g);
+        juce::Path glassClip;
+        glassClip.addRoundedRectangle (glassPanel, glassCorner);
+        g.reduceClipRegion (glassClip);
+
+        juce::Path sheen;
+        sheen.startNewSubPath (glassPanel.getX(), glassPanel.getY());
+        sheen.lineTo (glassPanel.getX() + glassPanel.getWidth() * 0.58f, glassPanel.getY());
+        sheen.lineTo (glassPanel.getX() + glassPanel.getWidth() * 0.24f, glassPanel.getBottom());
+        sheen.lineTo (glassPanel.getX(), glassPanel.getBottom());
+        sheen.closeSubPath();
+
+        juce::ColourGradient sheenGradient (juce::Colours::white.withAlpha (0.065f), glassPanel.getTopLeft(),
+                                            juce::Colours::transparentWhite,
+                                            glassPanel.getTopLeft().getPointOnCircumference (glassPanel.getWidth() * 0.45f, 2.2f),
+                                            false);
+        g.setGradientFill (sheenGradient);
+        g.fillPath (sheen);
     }
 }
 
-void drawRedBadge (juce::Graphics& g, juce::Rectangle<float> bounds,
-                   const juce::String& topLine, const juce::String& bottomLine)
+void drawEngravedLabel (juce::Graphics& g, juce::Rectangle<float> bounds,
+                        const juce::String& title, const juce::String& subtitle)
 {
-    juce::ColourGradient red (signalRedBright, bounds.getTopLeft(),
-                              signalRedDark, bounds.getBottomLeft(), false);
-    red.addColour (0.32, signalRed);
-    g.setGradientFill (red);
+    const auto titleArea = bounds.withHeight (12.0f);
+    const auto subtitleArea = bounds.withTrimmedTop (13.0f).withHeight (10.0f);
+
+    g.setColour (crimsonAccent.withAlpha (0.85f));
+    g.fillRect (bounds.getX(), bounds.getY() + 2.0f, 2.0f, 8.0f);
+
+    g.setColour (textSecondary);
+    g.setFont (font (8.2f, Weight::semibold, 0.17f));
+    g.drawText (title, titleArea.withTrimmedLeft (7.0f), juce::Justification::centredLeft, false);
+
+    g.setColour (textSecondary.withAlpha (0.68f));
+    g.setFont (font (6.3f, Weight::regular, 0.13f));
+    g.drawText (subtitle, subtitleArea.withTrimmedLeft (7.0f), juce::Justification::centredLeft, false);
+}
+
+void drawGlassWell (juce::Graphics& g, juce::Rectangle<float> bounds, float corner)
+{
+    g.setColour (obsidianWell.withAlpha (0.92f));
+    g.fillRoundedRectangle (bounds, corner);
+
+    g.setColour (juce::Colours::black.withAlpha (0.38f));
+    g.fillRoundedRectangle (bounds.withHeight (juce::jmin (4.0f, bounds.getHeight() * 0.35f)), corner);
+
+    g.setColour (glassRimHighlight.withAlpha (0.16f));
+    g.drawRoundedRectangle (bounds.reduced (0.5f), corner, 0.7f);
+
+    g.setColour (crimsonAccent.withAlpha (0.16f));
+    g.drawRoundedRectangle (bounds.reduced (1.4f), juce::jmax (1.0f, corner - 1.2f), 0.7f);
+}
+
+void drawSignalChip (juce::Graphics& g, juce::Rectangle<float> bounds, const juce::String& text)
+{
+    g.setColour (obsidianScreen.withAlpha (0.92f));
     g.fillRoundedRectangle (bounds, 2.0f);
 
-    g.setColour (seamHighlight.withAlpha (0.38f));
-    g.drawRoundedRectangle (bounds.reduced (0.7f), 1.5f, 0.8f);
+    g.setColour (gunmetalLight.withAlpha (0.42f));
+    g.drawRoundedRectangle (bounds.reduced (0.5f), 2.0f, 0.7f);
 
-    g.setColour (inkLightOnDark);
-    g.setFont (font (30.0f, Weight::black, 0.01f));
-    g.drawText (topLine, bounds.withTrimmedTop (-2.0f).withHeight (bounds.getHeight() * 0.64f),
-                juce::Justification::centred, false);
+    g.setColour (crimsonAccent.withAlpha (0.30f));
+    g.fillRect (bounds.getX() + 4.0f, bounds.getBottom() - 1.5f, bounds.getWidth() - 8.0f, 0.8f);
 
-    g.setColour (juce::Colours::white.withAlpha (0.88f));
-    g.setFont (font (6.6f, Weight::black, 0.18f));
-    g.drawText (bottomLine, bounds.withTrimmedTop (bounds.getHeight() * 0.57f),
-                juce::Justification::centred, false);
+    g.setColour (textSecondary);
+    g.setFont (font (5.9f, Weight::semibold, 0.15f));
+    g.drawText (text, bounds, juce::Justification::centred, false);
 }
 
-juce::Rectangle<float> moduleContentBounds (juce::Rectangle<float> panel)
+void drawCrimsonDot (juce::Graphics& g, juce::Point<float> centre, float radius)
 {
-    return panel.reduced (16.0f, 12.0f).withTrimmedTop (48.0f).withTrimmedBottom (8.0f);
+    g.setColour (crimsonGlow.withAlpha (0.28f));
+    g.fillEllipse (centre.x - radius * 2.4f, centre.y - radius * 2.4f,
+                   radius * 4.8f, radius * 4.8f);
+    g.setColour (crimsonAccent);
+    g.fillEllipse (centre.x - radius, centre.y - radius, radius * 2.0f, radius * 2.0f);
+    g.setColour (crimsonBright);
+    g.fillEllipse (centre.x - radius * 0.45f, centre.y - radius * 0.45f,
+                   radius * 0.9f, radius * 0.9f);
 }
-} // namespace retro80s::ui
+} // namespace studio::ui

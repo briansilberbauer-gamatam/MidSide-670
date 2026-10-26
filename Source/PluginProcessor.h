@@ -5,6 +5,7 @@
 
 #include "dsp/VariableMu.h"
 
+#include <array>
 #include <atomic>
 #include <memory>
 
@@ -57,11 +58,19 @@ public:
     float getGainReductionSide() const noexcept { return gainReductionSide.load (std::memory_order_relaxed); }
     int getOversamplingFactor() const noexcept { return oversamplingFactor; }
 
+    // Lock-free display history for the central waveform screen. The audio thread
+    // publishes min/max columns; the message thread copies them in chronological
+    // order without locking or allocating.
+    static constexpr int waveformCapacity = 1024;
+    int copyWaveform (float* minColumns, float* maxColumns, int maxColumnCount) const noexcept;
+
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 private:
     void parameterChanged (const juce::String& parameterID, float newValue) override;
     void applyPreset (int index);
+    void resetWaveformHistory() noexcept;
+    void captureWaveform (const juce::AudioBuffer<float>& buffer, int numSamples) noexcept;
 
     static constexpr int processingChannels = 2;
     static constexpr int oversamplingLog2 = 2; // 4x
@@ -112,6 +121,14 @@ private:
     std::atomic<float> outputLevelRight { 0.0f };
     std::atomic<float> gainReductionMid { 0.0f };
     std::atomic<float> gainReductionSide { 0.0f };
+
+    std::array<std::atomic<float>, waveformCapacity> waveformMin {};
+    std::array<std::atomic<float>, waveformCapacity> waveformMax {};
+    std::atomic<juce::uint32> waveformWriteCount { 0 };
+    int waveformSamplesPerColumn = 64;
+    int waveformAccumulatedSamples = 0;
+    float waveformAccumulatedMin = 0.0f;
+    float waveformAccumulatedMax = 0.0f;
 
     double currentSampleRate = 48000.0;
     int preparedBlockSize = 512;
