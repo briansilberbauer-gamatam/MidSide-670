@@ -3,17 +3,19 @@ name: vst3-80s-plugin
 description: >-
   JUCE 8 VST3 audio plugin architecture, offline Linux CMake build/test workflow,
   GitHub Actions CI/release pipelines (Windows, Linux, macOS Universal), DeepSeek
-  Harness (dsh) Flash & Pro orchestration, and 1980s silver-and-red plastic
-  electronics (tape/radio combo / boombox) Look & Feel specification.
+  Harness (dsh) Flash & Pro orchestration, and Futuristic Studio Hardware Look &
+  Feel (brushed gunmetal chassis, flush transparent glass overlay with crimson
+  LED edge-glow, low-profile knurled metal knobs, ultra-thin glass sliders, and
+  central glowing red waveform visualizer).
 user-invocable: true
 ---
 
-# VST3 Plugin Development & 1980s Silver/Red Electronics UI Skill (DeepSeek Harness)
+# VST3 Plugin Development & Futuristic Studio Hardware UI Skill (DeepSeek Harness)
 
-This skill defines the engineering workflow, JUCE 8.0.8 conventions, **DeepSeek Harness (`dsh`)** tool & model orchestration (**DeepSeek V4 Pro** vs **DeepSeek V4 Flash**), cross-platform **GitHub Actions CI & Release workflows (Windows, Linux, macOS)**, and the **1980s Silver & Red Molded Plastic Electronics (Boombox / Tape-Radio Combo)** visual design system for building VST3 plugins in `/home/brians/bls/sound/MidSide-670`.
+This skill defines the engineering workflow, JUCE 8.0.8 conventions, **DeepSeek Harness (`dsh`)** tool & model orchestration (**DeepSeek V4 Pro** vs **DeepSeek V4 Flash**), cross-platform **GitHub Actions CI & Release workflows (Windows, Linux, macOS)**, and the **Sleek Futuristic Studio Hardware (Brushed Gunmetal + Flush Glass Overlay + Muted Crimson Red LED Edge-Glow)** visual design system for building VST3 plugins in `/home/brians/bls/sound/MidSide-670`.
 
 When this skill is loaded in DeepSeek Harness, also read the companion reference files using the `read` tool as needed:
-- `references/look-and-feel-recipes.md` — Copy-pasteable JUCE 8 `Graphics` drawing recipes for 1980s silver/red plastic components.
+- `references/look-and-feel-recipes.md` — Copy-pasteable JUCE 8 `Graphics` drawing recipes for the brushed gunmetal chassis, crimson-edged glass overlay, low-profile knurled metal knobs, ultra-thin vertical sliders, glowing red border tactile buttons, top pill readout, and central real-time red waveform visualizer.
 - `references/github-actions-ci-release.md` — Complete `.github/workflows/build.yml` for Windows x64, Linux x64, macOS Universal (`arm64` + `x86_64`), and automated GitHub Release publishing.
 
 ---
@@ -25,14 +27,14 @@ Whether switching models manually in the harness or orchestrating child agents v
 
 | Task Area | Target Model | Responsibilities |
 | :--- | :--- | :--- |
-| **DSP & Audio Architecture** | **DeepSeek V4 Pro** (`deepseek-pro` / `deepseek-reasoner`) | Mid/Side encoding/decoding (`M = (L+R)*0.5`, `S = (L-R)*0.5`), 670-style variable-mu / program-dependent compression curves, time-constant networks (switches 1–6), transformer saturation/oversampling, bypass latency compensation, and lock-free UI metering atomics. |
-| **Custom `LookAndFeel` & Vector Art** | **DeepSeek V4 Pro** (`deepseek-pro` / `deepseek-reasoner`) | Writing procedural JUCE `Graphics` rendering in `LookAndFeel` and `Theme`: 3D molded silver ABS bevels, parting seams, fluted rotary knobs with red pointers, mechanical cassette-style push-latch buttons, ridged slide switches, and smoked-acrylic discrete LED bargraphs. |
-| **Scaffolding & Parameter Plumbing** | **DeepSeek V4 Flash** (`deepseek-flash`) | Creating `CMakeLists.txt`, `Source/Parameters.h`, `Source/Presets.h`, APVTS parameter layout, attachment wiring, value formatters (`dB`, `ms`, `Hz`, `%`, ratios), and component `resized()` grid placement. |
-| **Tests, Tooling & Build Loop** | **DeepSeek V4 Flash** (`deepseek-flash`) | Writing `Tests/DspTests.cpp`, `Tools/HostSmokeTest.cpp`, `Tools/RenderEditor.cpp`, `scripts/setup-linux.sh`, `scripts/build.sh`, and executing CMake builds and test binaries. |
+| **DSP & Audio Architecture** | **DeepSeek V4 Pro** (`deepseek-pro` / `deepseek-reasoner`) | Mid/Side encoding/decoding (`M = (L+R)*0.5`, `S = (L-R)*0.5`), 670-style variable-mu / program-dependent compression curves, time-constant networks, drive/tone shaping, filter/limiter stages, bypass latency compensation, and lock-free UI metering + real-time waveform ring buffer atomics. |
+| **Custom `LookAndFeel` & Vector Art** | **DeepSeek V4 Pro** (`deepseek-pro` / `deepseek-reasoner`) | Writing procedural JUCE `Graphics` rendering in `LookAndFeel`, `Theme`, and custom visualizer components: three-quarter/dimensional desktop unit on a dark studio surface, horizontal brushed gunmetal grain, flush screwless glass overlay with crimson LED edge-glow and upper-left soft-box reflections, low-profile heavy-machined knurled knobs with crimson under-glow, ultra-thin glass vertical sliders, thin red-bordered tactile buttons, pill-shaped preset header readout, and central glowing red waveform visualizer. |
+| **Scaffolding & Parameter Plumbing** | **DeepSeek V4 Flash** (`deepseek-flash`) | Creating `CMakeLists.txt`, `Source/Parameters.h`, `Source/Presets.h`, APVTS parameter layout, attachment wiring, value formatters (`dB`, `ms`, `Hz`, `%`, ratios), and component `resized()` layout. |
+| **Tests, Tooling & Build Loop** | **DeepSeek V4 Flash** (`deepseek-flash`) | Writing `Tests/DspTests.cpp`, `Tools/HostSmokeTest.cpp`, `Tools/RenderEditor.cpp`, `scripts/setup-linux.sh`, `scripts/build.sh`, `.github/workflows/build.yml`, and executing CMake builds and test binaries. |
 
 ### B. DeepSeek Harness Tooling Rules
 1. **Task Tracking (`todo_write` / `create_goal`)**:
-   - At the beginning of a multi-step build, call `todo_write` to maintain a clear checklist (`Setup JUCE & sysroot`, `Implement Parameters & DSP`, `Implement 1980s Silver/Red UI`, `Build & Run DSP/Host Tests`, `Render & Inspect UI Screenshot`).
+   - At the beginning of a multi-step build, call `todo_write` to maintain a clear checklist (`Setup JUCE & sysroot`, `Implement Parameters & DSP + Waveform FIFO`, `Implement Brushed Gunmetal & Crimson Glass UI`, `Build & Run DSP/Host Tests`, `Render & Inspect UI Screenshot`).
 2. **Parallel Subagents & Multi-Model `workflow`**:
    - Use `subagent` / `subagent_fork` to parallelize independent C++ modules (for example, one agent implementing `Source/dsp/` + `Tests/DspTests.cpp` while another implements `Source/ui/`) so long C++ files and compiler outputs do not bloat the main session context.
    - When using the `workflow` tool to coordinate models explicitly, pass `model` in `agent(prompt, { model: "deepseek-pro" | "deepseek-flash", label, phase })`.
@@ -45,11 +47,14 @@ Whether switching models manually in the harness or orchestrating child agents v
    - Only request `sandbox_permissions: "danger-full-access"` (with a clear `justification`) if copying the built `.vst3` bundle outside the workspace (e.g., to `~/.vst3`).
 5. **Visual Inspection & Presentation (`read_image` + `present`)**:
    - Never declare UI work finished based solely on a zero exit code from CMake.
-   - Run the `RenderEditor` screenshot binary (using `xvfb-run -a` if headless) to output a 2x PNG (`dist/midside670-ui.png`).
+   - Run the `RenderEditor` screenshot binary (using `xvfb-run -a` if headless) while feeding synthetic audio so the central waveform visualizer shows an active glowing red waveform, outputting a 2x PNG (`dist/midside670-ui.png`).
    - Call **`read_image`** on `dist/midside670-ui.png` to visually inspect the rendered plugin and verify:
-     - Silver molded plastic chassis (`#C6CCD3`) with crisp dark/light parting seams and red silkscreen framing (`#D9232A`).
-     - Fluted knobs with red pointers, mechanical push buttons with red LED lenses, ridged slide switches, and recessed smoked-acrylic LED meter windows.
-     - Zero text truncation, zero overlapping labels, and live LED meter activity.
+     - Dark brushed gunmetal chassis (`#1D2026`) sitting on a dark studio surface with chamfered matte edges and **zero visible screws or fasteners**.
+     - Flush transparent glass overlay with subtle crimson LED edge-glow/refraction (`#C82230`) and upper-left soft-box specular highlights.
+     - Top-center pill-shaped digital preset readout framed by minimalist `<` `>` chevrons.
+     - Central obsidian screen with a glowing red real-time audio waveform and subtle frequency/dB scale markers.
+     - Low-profile heavy-machined knurled metal knobs with tiny cap tick marks and subtle crimson LED under-glow, ultra-thin recessed vertical glass sliders, and rectangular tactile buttons outlined by a thin red glowing border when active.
+     - Zero text truncation or overlapping controls.
    - Call **`present`** on the PNG file path and embed `![MidSide-670 UI Preview](<dist/midside670-ui.png>)` in the final response so the user sees the rendered UI card in the DeepSeek Harness Web UI.
 
 ---
@@ -61,11 +66,12 @@ Whether switching models manually in the harness or orchestrating child agents v
      ```cpp
      juce::Font result { juce::FontOptions (typeface).withHeight (height) };
      ```
+   - **Preprocessor Definitions**: Never define `JUCE_DISPLAY_SPLASH_SCREEN=0` in `CMakeLists.txt` (removed in JUCE 8.0.8 and triggers a `#error`).
    - **Plugin Host Test**: When building a host test that scans `.vst3` bundles, set `JUCE_PLUGINHOST_VST3=1` in `target_compile_definitions`.
-2. **Real-Time Audio Thread Safety**:
+2. **Real-Time Audio Thread Safety & Lock-Free Waveform Telemetry**:
    - Zero heap allocations (`new`, `malloc`, `std::vector::push_back`, `juce::String`), zero mutex locks, and zero file/OS calls inside `processBlock()`.
-   - Read parameters once per block via raw atomic pointers (`apvts.getRawParameterValue(id)->load()`) and smooth sensitive gain/compression changes.
-   - Expose UI telemetry (Input/Output L/R peaks, Mid/Side levels, Gain Reduction dB) exclusively via `std::atomic<float>` polled by a `30 Hz` `juce::Timer` on the message thread.
+   - Read parameters once per block via raw atomic pointers (`apvts.getRawParameterValue(id)->load()`) and smooth sensitive gain/filter/compression changes.
+   - Expose UI telemetry (Input/Output L/R peaks, Mid/Side levels, Gain Reduction dB) via `std::atomic<float>` and feed the **Main Waveform Visualizer** using a pre-allocated, lock-free fixed-size ring buffer (`std::array<std::atomic<float>, 512>` or `juce::AbstractFifo`) polled by a `30–60 Hz` `juce::Timer` on the message thread.
 3. **Constant Latency Across Bypass**:
    - If any stage uses oversampling or lookahead, report the latency via `setLatencySamples()` in `prepareToPlay()` and route bypassed audio through a matching `juce::dsp::DelayLine` so bypassing never causes phase/timing jumps in the host.
 4. **Offline Linux Sysroot & JUCE Bootstrap**:
@@ -86,18 +92,18 @@ Use the proven four-target CMake structure (`CMAKE_CXX_STANDARD 17`, `CMAKE_SKIP
 ├── .gitignore                  # Excludes external/, deps/, build*/, dist/, stage*/, *.zip
 ├── AGENTS.md                   # Always-on DeepSeek Harness project instructions
 ├── CMakeLists.txt              # Plugin (VST3+Standalone), DspTests, HostSmokeTest, Screenshot
-├── Resources/                  # Bundled TTF fonts + OFL license (from ../plugin_poc/Resources)
+├── Resources/                  # Bundled clean geometric sans TTF fonts + OFL license
 ├── Source/
 │   ├── Parameters.h            # Stable parameter IDs & ranges
 │   ├── Presets.h               # Deterministic factory presets (reset all to default, then apply)
-│   ├── PluginProcessor.h/.cpp  # APVTS, M/S routing, 670 variable-mu DSP chain, atomic meters
+│   ├── PluginProcessor.h/.cpp  # APVTS, M/S 670 DSP chain, atomic meters & lock-free waveform FIFO
 │   ├── PluginEditor.h/.cpp     # Fixed 1180x720 design canvas + AffineTransform resizer
 │   ├── dsp/                    # Header-only or modular DSP classes
 │   └── ui/
-│       ├── Theme.h/.cpp        # 80s Silver & Red palette, typography, molded plastic panel helpers
-│       ├── RetroLookAndFeel.*  # Custom knobs, mechanical buttons, slide switches, combos
-│       ├── Controls.h/.cpp     # ParamKnob, PushLatchButton, SlideSwitch, LedBarMeter, VuMeter
-│       └── ModulePanel.h/.cpp  # Molded silver sub-chassis bay with silkscreened red frame
+│       ├── Theme.h/.cpp        # Gunmetal, Obsidian, Glass & Muted Crimson palette + surface helpers
+│       ├── StudioLookAndFeel.* # Low-profile knurled metal knobs, thin glass sliders, glowing buttons
+│       ├── Controls.h/.cpp     # KnurledKnob, GlassSlider, TactileButton, HeaderPillBar
+│       └── WaveformDisplay.*   # Embedded central obsidian screen + glowing red real-time waveform
 ├── Tests/
 │   └── DspTests.cpp            # Offline deterministic DSP test runner
 ├── Tools/
@@ -110,20 +116,21 @@ Use the proven four-target CMake structure (`CMAKE_CXX_STANDARD 17`, `CMAKE_SKIP
 
 ---
 
-## 4. Look & Feel Specification: 1980s Silver & Red Plastic Electronics
+## 4. Look & Feel Specification: Sleek Futuristic Studio Hardware (Gunmetal, Glass & Muted Crimson)
 
-The UI must evoke **1980s portable stereo tape/radio combos, boomboxes, and Walkman/hi-fi component decks** (e.g., early-80s Sony CFS/WM, Sharp GF, Aiwa, Panasonic RX series).
+### 1. Core Concept & Aesthetic
+- **Style**: Sleek, futuristic studio hardware meets high-end software GUI. Blends tactile analog instrumentation with modern, minimalist digital elements.
+- **Form Factor**: Desktop audio unit sitting on a dark studio surface, rendered with dimensional depth (three-quarter / chamfered desktop unit framing where the matte chamfered gunmetal base, thick layered glass top plate, and upper-left soft-box studio shadow are clearly perceived).
+- **Overall Vibe**: Premium, professional, moody, and precise.
 
-### Core Aesthetic Principles
-- **No Modern Dark-Mode / Sci-Fi Glow**: Do **not** use dark slate backgrounds with glowing neon arcs or glassmorphism. Everything is **physical, opaque, injection-molded plastic, silkscreened ink, smoked acrylic windows, and discrete rectangular LEDs**.
-- **Base Material — Metallic Silver Molded ABS Plastic**:
-  - The main body is spray-finished metallic silver plastic with directional top-lit gradients, crisp `1px` dark parting seams (`#5A6068`) paired with `1px` bright edge catchlights (`#EDF1F5`), molded corner screw wells, and subtle recessed ventilation slots.
-- **Contrast Material — Matte Charcoal Sub-Bezels & Smoked Acrylic**:
-  - Just like 80s boomboxes frame the tuner dial, cassette door, and LED meters in dark charcoal plastic, use recessed **matte charcoal ABS bays (`#262930`)** and **smoked acrylic windows (`#111317`)** to create high-contrast focal areas on the silver body.
-- **Highlight Color — 1980s Signal / Record Red**:
-  - Use **Signal Red (`#D9232A`)** for silkscreened section framing lines, solid red category badges (`MID`, `SIDE`, `PEAK`, `LIMIT`), molded red pointer wedges on knobs, tactile red push-buttons (like a cassette `REC` key), and red overload scale zones.
+### 2. Materials & Surface Textures
+- **Base Chassis**: Dark, gunmetal gray brushed metal (`#1D2026`) with a fine horizontal grain texture. The outer edges are smoothly chamfered (`#252A32` -> `#121419`) and matte-finished.
+- **Overlay Layer**: A thick, premium transparent glass (or polished acrylic) panel layered over the brushed metal base.
+- **Glass Edges**: The vertical and perimeter edges of the glass feature a subtle, low-profile **crimson red LED edge-glow (`#C82230`)** that casts a faint crimson refraction inward through the clear material.
+- **Fasteners**: Completely seamless and flush-mounted—**no visible screws, rivets, or mounting hardware** anywhere on the top glass surface.
+- **Lighting**: Studio soft-box ambient lighting from the **upper left**, casting soft shadows toward the bottom-right and creating crisp, glossy specular reflections and highlights across the polished glass surface.
 
-### Color Palette Constants (`Source/ui/Theme.h`)
+### 3. Color Palette Constants (`Source/ui/Theme.h`)
 
 Use this exact palette in `Theme.h`:
 
@@ -131,89 +138,104 @@ Use this exact palette in `Theme.h`:
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace retro80s::ui
+namespace studio::ui
 {
-    // --- Molded Silver ABS Plastic Chassis ---
-    inline const juce::Colour silverLight      { 0xffdce1e6 }; // Top surface gradient start
-    inline const juce::Colour silverBase       { 0xffc6ccd3 }; // Primary molded silver faceplate
-    inline const juce::Colour silverMid        { 0xffb5bcc4 }; // Lower panel gradient / recessed bay
-    inline const juce::Colour silverRecess     { 0xff9ea6af }; // Recessed control well background
-    inline const juce::Colour silverShadow     { 0xff7c848d }; // Bottom/right outer bevel shadow
-    inline const juce::Colour seamDark         { 0xff5a6068 }; // 1px molded plastic parting groove
-    inline const juce::Colour seamHighlight    { 0xffedf1f5 }; // 1px specular catchlight next to seam
+    // --- Dark Studio Surface & Ambient Soft-Box Backdrop ---
+    inline const juce::Colour studioSurfaceLight { 0xff12151c }; // Upper-left soft-box lit desk surface
+    inline const juce::Colour studioSurfaceDark  { 0xff07080b }; // Lower-right shadowed studio surface
+    inline const juce::Colour dropShadowDeep     { 0xff020305 }; // Desktop unit cast shadow
 
-    // --- Charcoal ABS Sub-Bezels & Smoked Acrylic Windows ---
-    inline const juce::Colour charcoalBezel    { 0xff262930 }; // Raised dark plastic sub-panel (meter/tuner surround)
-    inline const juce::Colour charcoalDeep     { 0xff191b20 }; // Switch slots, knob wells, vent louvers
-    inline const juce::Colour smokedWindow     { 0xff111317 }; // Recessed LED / cassette meter window
+    // --- Brushed Gunmetal Base Chassis & Chamfered Edges ---
+    inline const juce::Colour gunmetalLight      { 0xff2b3038 }; // Upper-left brushed metal highlight
+    inline const juce::Colour gunmetalBase       { 0xff1d2026 }; // Primary gunmetal gray chassis
+    inline const juce::Colour gunmetalDeep       { 0xff13151a }; // Lower-right chassis shade & recesses
+    inline const juce::Colour chamferLight       { 0xff343a44 }; // Upper-left matte chamfered edge catch
+    inline const juce::Colour chamferDark        { 0xff0e1014 }; // Lower-right chamfered skirt extrusion
 
-    // --- 1980s Signal Red Highlights & Molded Red Plastic ---
-    inline const juce::Colour signalRed        { 0xffd9232a }; // Primary silkscreen red lines, badges & pointers
-    inline const juce::Colour signalRedBright  { 0xffff3b42 }; // Specular ridge on molded red plastic caps
-    inline const juce::Colour signalRedDark    { 0xff8f1318 }; // Shadow edge on molded red buttons/switches
-    inline const juce::Colour redScaleZone     { 0xffc81e24 }; // Hot/overload tick marks on silver faceplate
+    // --- Obsidian Black Screens & Recessed Cavities ---
+    inline const juce::Colour obsidianScreen     { 0xff090a0d }; // Main visualizer & top pill readout background
+    inline const juce::Colour obsidianWell       { 0xff0d0f13 }; // Low-profile knob & slider mounting recess
+    inline const juce::Colour obsidianGrid       { 0xff181b22 }; // Subtle dB / frequency scale grid hairlines
 
-    // --- Discrete LED Segments (Inside Smoked Acrylic Window) ---
-    inline const juce::Colour ledRedLit        { 0xffff2a2a }; // Active red LED segment / PEAK indicator
-    inline const juce::Colour ledRedUnlit      { 0xff381417 }; // Unlit red LED cell (visible in window)
-    inline const juce::Colour ledAmberLit      { 0xffffa826 }; // Warm warning LED segment
-    inline const juce::Colour ledAmberUnlit    { 0xff332412 }; // Unlit amber LED cell
-    inline const juce::Colour ledGreenLit      { 0xff36d65b }; // Signal present LED segment
-    inline const juce::Colour ledGreenUnlit    { 0xff142e1b }; // Unlit green LED cell
+    // --- Transparent Glass Overlay & Soft-Box Reflections ---
+    inline const juce::Colour glassTintTop       { 0x1affffff }; // Upper-left soft-box glass sheen
+    inline const juce::Colour glassTintBottom    { 0x26050608 }; // Deep smoked glass depth tint
+    inline const juce::Colour glassSpecular      { 0x14ffffff }; // Glossy diagonal soft-box reflection band
+    inline const juce::Colour glassRimHighlight  { 0x33ffffff }; // Crisp 1px polished glass top/left bevel
 
-    // --- Silkscreened Ink Typography ---
-    inline const juce::Colour inkBlack         { 0xff181a1e }; // Primary silkscreened text on silver plastic
-    inline const juce::Colour inkCharcoal      { 0xff3a3f47 }; // Secondary labels, scale numbers on silver
-    inline const juce::Colour inkMuted         { 0xff5c636e }; // Fine technical annotations on silver
-    inline const juce::Colour inkLightOnDark   { 0xffe8edf2 }; // Crisp white/silver print on charcoal or red badges
-    inline const juce::Colour inkMutedOnDark   { 0xff98a1ab }; // Sub-labels inside dark charcoal bezels
+    // --- Muted, Sophisticated Crimson Red Accents ---
+    inline const juce::Colour crimsonAccent      { 0xffc82230 }; // Primary muted crimson LED & active border
+    inline const juce::Colour crimsonBright      { 0xffef3b49 }; // Hot core of waveform trace & edge-glow center
+    inline const juce::Colour crimsonGlow        { 0xff8c141f }; // Diffused crimson refraction & knob under-glow
+    inline const juce::Colour crimsonSubtle      { 0xff3d1218 }; // Dormant/dim crimson scale & track undertone
+
+    // --- Clean Minimalist Sans-Serif Typography ---
+    inline const juce::Colour textPrimary        { 0xffeceff4 }; // Active labels, pill readout & cap tick marks
+    inline const juce::Colour textSecondary      { 0xff929aa8 }; // Control titles ("Drive", "Tone", "Mix", "Output")
+    inline const juce::Colour textMuted          { 0xff545b68 }; // Subtle dB/Hz scale markers & inactive buttons
 }
 ```
 
-### Component-by-Component Visual Recipes
+---
 
-#### 1. Main Chassis & Molded Sub-Panels (`drawMoldedPanel`)
-- **Outer Chassis**: Fill with a vertical `ColourGradient` from `silverLight` at the top to `silverMid` at the bottom. Draw a `2px` outer bevel (top/left `seamHighlight`, bottom/right `silverShadow`).
-- **Molded Plastic Seams**: Divide functional bays (Header, Mid Channel, Side Channel, Master/Matrix, Footer) using **double-line injection seams**:
-  - Draw a `1.0f` line in `seamDark`, immediately followed `+1.0f` below/right by a `1.0f` line in `seamHighlight`.
-- **Silkscreened Red Framing**: Inside each module panel, draw a crisp `1.5f` rounded rectangle (corner radius `4.0f`–`6.0f`, **tighter 80s corners**, not large `14px` web cards!) in `signalRed`.
-- **Module Header Strip**: At the top-left of the red frame, render a solid `signalRed` rectangular tab/badge containing the module number and title in bold uppercase `inkLightOnDark` (`[ 01 // MID COMPRESSOR ]`), accompanied by technical silkscreen sub-labels (`VARIABLE-MU // TIME CONSTANT`) in `inkCharcoal`.
-- **Hardware Details**: Paint 4 small recessed screw heads or molded plastic rivet dimples at the outer chassis corners and a row of narrow horizontal recessed vent slots (`charcoalDeep` with bottom `seamHighlight`) along the top header bar.
+### 4. Controls & Interface Elements (Component Specifications)
 
-#### 2. 1980s Rotary Knobs (`drawRotarySlider` — Fluted Skirt + Red Pointer)
-Never draw glowing neon arcs around knobs. Instead, render a physical 3-layer 1980s component knob:
-1. **Silkscreened Faceplate Scale (Outer Ring)**:
-   - Draw 11 major ticks and 10 minor sub-ticks directly on the silver panel around the knob circumference.
-   - Ticks below 75% travel use `inkBlack` (`1.4f` thick); ticks above 75% (the "hot/red zone") use `signalRed` (`1.8f` thick), optionally joined by a silkscreened red arc band.
-2. **Recessed Mounting Well**:
-   - Fill a circle at `radius * 0.76f` with `charcoalDeep` and a subtle top-left inner shadow / bottom-right `seamHighlight` rim.
-3. **Fluted Plastic Skirt & Brushed Cap**:
-   - Draw 20–24 radial serration notches around `radius * 0.70f` in `charcoalBezel` / `inkBlack` to simulate a grippy molded plastic skirt.
-   - Fill the inner cap (`radius * 0.54f`) with a metallic silver or dark anthracite linear gradient (`silverLight` to `silverShadow`, or `charcoalBezel` to `charcoalDeep` for primary stepped switches) with a `1px` specular ring.
-4. **Molded Red Pointer Wedge**:
-   - Draw a bold, physical `signalRed` pointer bar (`2.5f`–`3.0f` wide) extending from the inner cap edge to the outer skirt, with a `1px` dark drop shadow and a bright `signalRedBright` center line.
-5. **Value Callout**:
-   - Display the parameter name above or below in uppercase tracked `inkBlack` (`9pt` Black/Semibold), and the live numeric readout inside a small recessed dark pill (`charcoalDeep` background, `inkLightOnDark` or `signalRedBright` text) resembling a mini digital/mechanical counter window.
+#### A. Desktop Chassis, Brushed Gunmetal Base & Crimson-Edged Glass Overlay
+- **Three-Quarter / Dimensional Desktop Presence**:
+  - Inset the hardware unit slightly from the outer window (`14px–18px` margin) so it rests visibly on the dark studio surface (`studioSurfaceLight` -> `studioSurfaceDark`).
+  - Render a slightly offset bottom-right chamfered extrusion base (`chamferDark` + multi-pass `dropShadowDeep`) so the unit reads as a physical desktop hardware instrument lit from the upper-left soft-box.
+- **Horizontal Brushed Gunmetal Texture**:
+  - Fill the chassis body with a directional gradient (`gunmetalLight` at top-left to `gunmetalDeep` at bottom-right) and draw deterministic `1px` horizontal brush grain lines across the entire width using alternating subtle alpha strokes (`0x08ffffff` and `0x12000000`).
+- **Flush Glass Panel with Crimson LED Edge-Glow (Zero Screws)**:
+  - Layer a seamless, screwless glass rectangle over the brushed metal base.
+  - Along the vertical and perimeter edges of the glass, paint a soft inward crimson refraction gradient (`crimsonGlow.withAlpha(0.22f)` fading over `10px`) paired with a crisp `1.2f` perimeter light-pipe stroke (`crimsonAccent`, brightest along the left/right vertical edges and top-left corner).
+  - Paint a crisp diagonal soft-box glass reflection (`glassSpecular`) sweeping across the upper-left quadrant of the glass surface.
 
-#### 3. Mechanical Tape-Deck Push Buttons (`PowerSwitch` / Latching Toggles)
-- Model bypass and link toggles after **1980s cassette deck rectangular push buttons**:
-  - Draw a dark recessed rectangular well (`charcoalDeep`, corner radius `2.5f`).
-  - Inside the well, draw a beveled rectangular plastic button cap (`silverBase` when OFF, or molded `signalRed` for primary/record-style toggles).
-  - **Engaged (ON) State**: Shift the button cap `1.5px` down inside the well, compress its bottom shadow, and illuminate a **rectangular red LED indicator (`ledRedLit` with subtle ruby halo)** in a small bezel directly above the key, labeled `IN` / `ACTIVE` in silkscreened `inkBlack`.
-  - **Bypassed (OFF) State**: Button sits raised (`0px` offset) with a deeper bottom shadow (`3px` `charcoalDeep`), and the LED lens shows `ledRedUnlit`. Do **not** fade out the whole module panel with low alpha (`0.38f`)—physical hardware doesn't turn transparent when bypassed! Instead, dim only the active LEDs and switch the status badge to `BYPASS`.
+#### B. Top Header Pill-Shaped Digital Readout (`HeaderPillBar`)
+- **Geometry**: A slender, pill-shaped (`cornerRadius = height * 0.5f`) digital readout screen positioned at the **top center** of the glass panel.
+- **Visuals**:
+  - Filled with `obsidianScreen` (`#090A0D`), outlined by a `1px` polished glass rim (`glassRimHighlight` top-left, `crimsonAccent.withAlpha(0.45f)` subtle crimson refraction along the sides).
+  - Displays the plugin/preset identifier in clean, tracked uppercase sans-serif typography (`textPrimary`, e.g., `MIDSIDE-670 // MASTER GLUE`), with subtle crimson status dot or mode tag.
+  - Framed on the left and right inside the pill by minimalist chevron navigation buttons (`<` and `>`) that highlight with a thin crimson border on hover/press.
 
-#### 4. Ridged Multi-Position Slide Switches (`ModeBar` / Time Constant Selector)
-- Replace flat web-style segmented pills with a **physical 80s slide switch**:
-  - Draw a horizontal recessed dark track (`charcoalDeep`, height `18px–22px`, corner radius `3px`) with silkscreened position labels (`STEREO`, `MID/SIDE`, `DUAL` or `TC 1..6`) printed above/below each detent in `inkBlack` (and `signalRed` for the active index).
-  - At the selected detent position, draw a raised rectangular slider thumb (`silverLight` to `silverMid` gradient, or `signalRed` gradient) with a crisp `1px` dark border and **three vertical molded grip ridges (`|||`)** in the center of the thumb.
+#### C. Main Central Waveform Visualizer (`WaveformDisplay`)
+- **Geometry**: A large, central display screen embedded beneath the glass panel (`obsidianScreen` `#090A0D`).
+- **Scale & Grid**:
+  - Draw ultra-fine horizontal dB scale markers (`0 dB`, `-6 dB`, `-12 dB`, `-18 dB`, `-24 dB`) and vertical time/frequency divisions in `obsidianGrid` (`#181B22`), labeled with crisp `7.5pt` minimalist sans-serif markers in `textMuted`.
+- **Glowing Red Real-Time Audio Waveform**:
+  - Render the live audio waveform (and optional subtle gain-reduction trace) using a three-layer crimson glow pass:
+    1. **Subtle Filled Envelope & Wide Halo**: Filled waveform body in `crimsonGlow.withAlpha(0.12f)` + outer stroke (`5.5f` width) in `crimsonGlow.withAlpha(0.24f)`.
+    2. **Primary Muted Crimson Trace**: Stroke (`2.0f` width) in `crimsonAccent` (`#C82230`).
+    3. **Crisp Specular Core**: Stroke (`0.9f` width) in `crimsonBright` (`#EF3B49`).
+  - Overlay a subtle upper-left glass reflection across the visualizer window so it sits cohesively under the main glass sheet.
 
-#### 5. Smoked Acrylic Meter Window (`LedBarMeter` / `GainReductionMeter` / `StereoMeter`)
-- Group all meters inside a **recessed smoked-acrylic window bay** (`smokedWindow` `#111317`) framed by a `charcoalBezel` outer surround and a `1px` inner `signalRed` pinstripe:
-  - **Glass Reflection**: Paint a subtle diagonal polygon across `25%` of the window in `juce::Colours::white.withAlpha(0.045f)` so it reads as a clear plastic cassette/tuner window.
-  - **Discrete LED Segments**: Draw meters as an array of **16 to 24 discrete rectangular LED cells** (`gap = 2px`, corner radius `1px`).
-  - Always draw **unlit LED segments** (`ledRedUnlit` / `ledGreenUnlit`) so the physical LED grid is visible even during silence.
-  - For **Gain Reduction**: Right-to-left or left-to-right **all-red (`ledRedLit`)** or amber-to-red discrete LEDs with silkscreened scale numbers (`0`, `-3`, `-6`, `-10`, `-15`, `-20 dB`) in `inkLightOnDark`.
-  - For **Stereo / M-S Output**: Dual horizontal LED bars (`L / R` or `M / S`) with green segments up to `-12 dB`, amber to `-3 dB`, and `ledRedLit` above `-3 dB`, plus a circular **red `PEAK` LED jewel** that latches on clip.
+#### D. Low-Profile Heavy-Machined Knurled Metal Knobs (`drawRotarySlider`)
+- **Design**: Large, heavy-machined metal primary knobs (e.g., `"Drive"`, `"Tone"`, `"Threshold"`, `"Time Constant"`) recessed into the glass/metal chassis with a **flat, low-profile height**:
+  1. **Recessed Well & Subtle Crimson LED Under-Glow**:
+     - Draw a recessed circular cavity (`obsidianWell`) just outside the knob rim.
+     - Render a soft, diffused crimson LED under-glow (`crimsonGlow` / `crimsonAccent` radial halo + subtle active arc) inside the recess gap so crimson light appears to bleed from *underneath* the machined metal skirt.
+  2. **Fine Knurled Vertical Ridges on Outer Rim**:
+     - Draw the outer machined metal bevel (`radius * 0.86f` to `radius * 0.74f`) with **64 fine radial knurling ridges** (`0.9f` lines alternating upper-left specular `gunmetalLight.brighter(0.25f)` and dark groove `obsidianScreen`) to simulate precision CNC vertical knurling on the outer rim.
+  3. **Flat Low-Profile Brushed Metal Cap**:
+     - Fill the wide flat cap (`radius * 0.74f`) with an upper-left to lower-right metallic gradient (`#303540` -> `#1E2229` -> `#14171C`), overlaid with fine horizontal brushed grain lines clipped to the cap circle and a `1px` top-left specular bevel.
+  4. **Tiny Minimalist Tick Mark**:
+     - Near the outer perimeter of the flat cap (`radius * 0.56f` to `radius * 0.70f`), draw a **tiny, surgical minimalist tick mark** (`1.6f` wide) in crisp `textPrimary` (`#ECEFF4`) or `crimsonBright`. Never draw bulky plastic wedges.
+
+#### E. Low-Profile Vertical Touch / Ultra-Thin Mechanical Sliders (`drawLinearSlider`)
+- **Design**: Vertical touch-style or ultra-thin mechanical sliders (e.g., `"Mix"`, `"Output"`, `"Mid Gain"`, `"Side Gain"`) integrated smoothly into the glass surface:
+  - **Recessed Linear Track**: A narrow (`4px` wide) vertical recessed slot (`obsidianWell`) with a `1px` glass edge highlight and a subtle muted crimson active fill (`crimsonAccent`) rising from the bottom (or center for bipolar trims) to the thumb position.
+  - **Minimalist Tick Marks**: Hairline horizontal tick marks (`6px` wide, `1px` thick in `textMuted.withAlpha(0.55f)`) arrayed cleanly along both sides of the recessed track.
+  - **Ultra-Thin Flush Slider Thumb**: A sleek, low-profile machined metal/glass touch bar (`width = 22px`, `height = 9px`, `cornerRadius = 2.0f`) with an upper-left specular edge and a thin `1px` glowing `crimsonBright` center indicator line.
+
+#### F. Low-Profile Rectangular Tactile Buttons (`drawToggleButton`)
+- **Design**: Rectangular, low-profile tactile buttons (`"Bypass"`, `"Filter"`, `"Comp"`, `"Limiter"`, `"M/S Mode"`, `"Link"`) flush-mounted in the glass surface with crisp, clean sans-serif typography:
+  - **Inactive (Off) State**:
+    - Flush dark gunmetal/glass fill (`#161920` -> `#12141A`), `1px` understated border (`#252A34`), and clean sans-serif label in `textSecondary`.
+  - **Active (On) State**:
+    - Outlined by a **thin, understated red glowing border**:
+      - Soft outer crimson bloom (`crimsonGlow.withAlpha(0.32f)`, `3.0f` rounded rect stroke)
+      - Crisp `1.2f` border in `crimsonAccent` (`#C82230`) with a subtle `crimsonBright` catchlight on the upper-left corner
+      - Faint interior crimson glass tint (`crimsonGlow.withAlpha(0.10f)`) and crisp `textPrimary` (`#ECEFF4`) typography.
 
 ---
 
@@ -250,25 +272,14 @@ When creating or updating `.github/workflows/build.yml` and `CMakeLists.txt`, re
 1. **Hybrid Local (`external/JUCE`) vs. CI (`FetchContent`) Resolution in `CMakeLists.txt`**:
    - Check `if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE/CMakeLists.txt")` first so local offline builds in `dsh` use the symlinked/copied JUCE 8.0.8 tree, and fall back to `FetchContent_Declare(JUCE GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.8 GIT_SHALLOW TRUE)` on GitHub Actions runners.
    - Ensure `.gitignore` excludes `external/`, `deps/`, `build*/`, `dist/`, `stage*/`, `*.zip`, and `*.sha256`.
-   - Do **not** define `JUCE_DISPLAY_SPLASH_SCREEN=0` in `CMakeLists.txt` (removed in JUCE 8.0.8 and triggers a `#error`).
+   - Do **not** define `JUCE_DISPLAY_SPLASH_SCREEN=0` in `CMakeLists.txt`.
 2. **Three OS Build & Test Jobs**:
-   - **Windows x64 (`runs-on: windows-2022`)**:
-     - Always pin `windows-2022` (not `windows-latest`, which uses the VS 2026 image lacking the VS 2022 generator expected by JUCE 8.0.8).
-     - Configure with `-A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DMIDSIDE670_BUILD_SCREENSHOT=OFF -DMIDSIDE670_BUILD_HOST_TEST=ON`.
-     - Run both `MidSide670Tests.exe` and `MidSide670HostSmokeTest.exe`, then package `.vst3` + Standalone `.exe` into `MidSide670-Windows-x64-v<VERSION>.zip` + `.sha256`.
-   - **Linux x64 (`runs-on: ubuntu-latest`)**:
-     - Install ALSA, X11, FreeType, and Fontconfig `-dev` packages, build with `-G Ninja -DCMAKE_BUILD_TYPE=Release`, run DSP & Host tests, strip debug symbols (`strip --strip-unneeded`), and package `MidSide670-Linux-x64-v<VERSION>.zip` + `.sha256`.
-   - **macOS Universal (`runs-on: macos-14`)**:
-     - Configure a Universal Binary (`-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0"`).
-     - Run ad-hoc code signing (`codesign --force --deep --sign -`) on both `*.vst3` and `*.app` **before** running `MidSide670HostSmokeTest` and packaging (required on Apple Silicon).
-     - Package bundles using `ditto -c -k --sequesterRsrc` into `MidSide670-macOS-Universal-v<VERSION>.zip` + `.sha256`.
+   - **Windows x64 (`runs-on: windows-2022`)**: Pin `windows-2022`, configure with `-A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded`, run DSP & Host tests, and package `.vst3` + Standalone `.exe` into `MidSide670-Windows-x64-v<VERSION>.zip` + `.sha256`.
+   - **Linux x64 (`runs-on: ubuntu-latest`)**: Install ALSA, X11, FreeType, and Fontconfig `-dev` packages, build with `-G Ninja -DCMAKE_BUILD_TYPE=Release`, run DSP & Host tests, strip debug symbols (`strip --strip-unneeded`), and package `MidSide670-Linux-x64-v<VERSION>.zip` + `.sha256`.
+   - **macOS Universal (`runs-on: macos-14`)**: Configure a Universal Binary (`-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0"`), ad-hoc sign (`codesign --force --deep --sign -`) both `*.vst3` and `*.app` before running `MidSide670HostSmokeTest`, and package with `ditto -c -k --sequesterRsrc` into `MidSide670-macOS-Universal-v<VERSION>.zip` + `.sha256`.
 3. **Automated GitHub Release Job (`publish-release`)**:
-   - Depends on all three OS jobs: `needs: [ windows-x64, linux-x64, macos-universal ]`.
-   - Runs when pushing a version tag (`v*`, e.g., `v1.0.0`) or manually via `workflow_dispatch` (`inputs.release_tag != ''`):
-     ```yaml
-     if: ${{ github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
-     ```
-   - Grants `permissions: contents: write` only on the `publish-release` job, downloads all uploaded `MidSide670-*` artifacts via `actions/download-artifact@v4` (`merge-multiple: true`), and publishes the GitHub Release with `softprops/action-gh-release@v2` (`generate_release_notes: true`, `overwrite_files: true`).
+   - Depends on `needs: [ windows-x64, linux-x64, macos-universal ]`.
+   - Triggers when pushing a version tag (`v*`) or via `workflow_dispatch` (`inputs.release_tag != ''`), downloads all artifacts (`actions/download-artifact@v4`), and publishes the GitHub Release via `softprops/action-gh-release@v2` with `permissions: contents: write`.
 
 ---
 
@@ -281,19 +292,16 @@ Every feature or UI iteration in DeepSeek Harness must pass all four automated c
    ./scripts/build.sh
    ```
 2. **Run Offline DSP Unit Tests**:
-   - Verify finite output, parameter response, Mid/Side matrix round-trip accuracy, gain reduction curves, and bypass latency alignment:
    ```bash
    ./build/*Tests_artefacts/Release/*Tests
    ```
 3. **Run VST3 Host Smoke Test**:
-   - Verify the `.vst3` bundle scans, instantiates, exposes all parameters/presets, processes audio, and serializes/restores state:
    ```bash
    ./build/*HostSmokeTest_artefacts/Release/*HostSmokeTest dist/*.vst3
    ```
 4. **Render, Inspect (`read_image`), and Present (`present`) 2x UI Screenshot**:
-   - Run the screenshot target (under `xvfb-run -a` using the sysroot wrapper if headless) while feeding synthetic audio so LED meters show live activity:
    ```bash
    ./build/*Screenshot_artefacts/Release/*Screenshot --out=dist/midside670-ui.png
    ```
-   - Call `read_image` on `dist/midside670-ui.png` to verify the 1980s silver plastic body, red highlights, silkscreened labels, and zero text clipping/overlap.
+   - Call `read_image` on `dist/midside670-ui.png` to verify the brushed gunmetal base, flush screwless glass overlay with crimson LED edge-glow, pill header readout, central glowing red waveform display, low-profile knurled metal knobs, ultra-thin vertical glass sliders, thin red-bordered tactile buttons, and zero text clipping/overlap.
    - Call `present` with `/home/brians/bls/sound/MidSide-670/dist/midside670-ui.png` and include `![MidSide-670 UI Preview](<dist/midside670-ui.png>)` in the final reply.
